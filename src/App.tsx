@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useGameStore } from './store/gameStore';
+import { useGameStore } from './store/GameStore';
 import { Header } from './components/Header';
 import { GameBoard } from './components/GameBoard';
 import { GameControls } from './components/GameControls';
