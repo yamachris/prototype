@@ -58,7 +58,7 @@ export class AudioManager {
     private initRevolutionSound() {
         try {
             this.revolutionSound = new Audio();
-            this.revolutionSound.src = '/assets/sound-design/revolution normale.wav';
+            this.revolutionSound.src = '/assets/sound-design/effects/revolution normale.wav';
             if (this.revolutionSound) {
                 this.revolutionSound.volume = this.volume;
                 this.revolutionSound.load();
