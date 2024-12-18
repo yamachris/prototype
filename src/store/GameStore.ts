@@ -3,13 +3,14 @@ import { create } from "zustand"; // Zustand est utilisé pour la gestion d'éta
 import { Card, Player, Phase, Suit, ColumnState, initialAttackButtons } from "../types/game";
 import { Card as CardType } from "../types/game";
 import { createDeck, drawCards, shuffleDeck } from "../utils/deck";
+import { t } from "i18next";
+import { AudioManager } from "../sound-design/audioManager";
 import { handleCardPlacement, handleJokerAction as handleJokerEffect, distributeCards } from "../utils/gameLogic";
 import i18next from "i18next"; // Importez i18next directement
 import i18n from "../i18n/config";
 import { createColumnActions } from "./slices/columnActions";
 import { createRevolutionActions } from "./slices/revolutionActions";
 import { createSacrificeActions } from "./slices/sacrificeActions";
-import { AudioManager } from "../sound-design/audioManager";
 
 // Au début du fichier, après les autres imports
 const t = (key: string) => i18next.t(key);
@@ -299,6 +300,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       let updatedPlayer = { ...state.currentPlayer };
 
       if (action === "heal") {
+        // Jouer le son de soin
+        AudioManager.getInstance().playHealSound();
+
         // Augmente les PV max et actuels de 3
         const newHealth = updatedPlayer.health + 3;
         updatedPlayer.maxHealth = newHealth;
@@ -365,6 +369,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
           message: t("game.messages.actionPhase"),
         };
       }
+
+      // Jouer le son de pioche
+      AudioManager.getInstance().playDrawSound();
 
       // Piocher les cartes nécessaires
       const [newDeck, drawnCards] = drawCards(state.deck, cardsNeeded);
@@ -565,6 +572,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Récupère les cartes de la défausse pour remplir le deck
     set((state) => {
       if (state.deck.length > 0 || state.currentPlayer.discardPile.length === 0) return state;
+
+      // Jouer le son de mélange
+      AudioManager.getInstance().playShuffleSound();
 
       const newDeck = shuffleDeck([...state.currentPlayer.discardPile]);
 
@@ -781,6 +791,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         return state;
       }
 
+      // Jouer le son de mélange
+      AudioManager.getInstance().playShuffleSound();
+
       const allDiscardedCards = [...state.currentPlayer.hand, ...state.currentPlayer.discardPile];
       const allCards = [...state.deck, ...allDiscardedCards];
       const newDeck = shuffleDeck(allCards);
@@ -854,6 +867,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (state.currentPlayer.hasUsedStrategicShuffle) {
         return state;
       }
+
+      // Jouer le son de mélange
+      AudioManager.getInstance().playShuffleSound();
 
       const allCards = [...state.deck, ...state.currentPlayer.discardPile];
       const newDeck = shuffleDeck(allCards);
@@ -1174,6 +1190,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
           const healAmount = activator?.type === "joker" ? 4 : 2;
           const newMaxHealth = state.currentPlayer.maxHealth + healAmount;
 
+          // Jouer le son de soin
+          AudioManager.getInstance().playHealSound();
+
           return {
             ...state,
             currentPlayer: {
@@ -1224,6 +1243,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const newReserve = state.currentPlayer.reserve.filter(
         (card) => !state.selectedCards.some((selected) => selected.id === card.id)
       );
+
+      // Jouer le son de soin
+      AudioManager.getInstance().playHealSound();
 
       return {
         ...state,

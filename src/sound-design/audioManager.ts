@@ -2,6 +2,10 @@ export class AudioManager {
     private static instance: AudioManager;
     private backgroundMusic: HTMLAudioElement | null = null;
     private revolutionSound: HTMLAudioElement | null = null;
+    private drawSound: HTMLAudioElement | null = null;
+    private healSound: HTMLAudioElement | null = null;
+    private sacrificeSound: HTMLAudioElement | null = null;
+    private shuffleSound: HTMLAudioElement | null = null;
     private isMuted: boolean = false;
     private volume: number = 0.03;
     private isPlaying: boolean = false;
@@ -9,6 +13,10 @@ export class AudioManager {
     private constructor() {
         this.initBackgroundMusic();
         this.initRevolutionSound();
+        this.initDrawSound();
+        this.initHealSound();
+        this.initSacrificeSound();
+        this.initShuffleSound();
     }
 
     public static getInstance(): AudioManager {
@@ -77,6 +85,96 @@ export class AudioManager {
         }
     }
 
+    private initDrawSound() {
+        try {
+            console.log("Initialisation du son de pioche...");
+            this.drawSound = new Audio();
+            this.drawSound.src = '/assets/sound-design/tirer 6.wav';
+            if (this.drawSound) {
+                // Volume plus élevé pour le son de pioche
+                this.drawSound.volume = this.volume * 20;
+                this.drawSound.load();
+                
+                // Ajouter des événements pour suivre l'état du chargement
+                this.drawSound.onloadeddata = () => {
+                    console.log("Son de pioche chargé avec succès");
+                };
+                
+                this.drawSound.onerror = (e) => {
+                    console.error('Erreur lors du chargement du son de pioche:', e);
+                };
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation du son de pioche:', error);
+        }
+    }
+
+    private initHealSound() {
+        try {
+            console.log("Initialisation du son de soin...");
+            this.healSound = new Audio();
+            this.healSound.src = '/assets/sound-design/gain pv.wav';
+            if (this.healSound) {
+                this.healSound.volume = this.volume * 10;
+                this.healSound.load();
+                
+                this.healSound.onloadeddata = () => {
+                    console.log("Son de soin chargé avec succès");
+                };
+                
+                this.healSound.onerror = (e) => {
+                    console.error('Erreur lors du chargement du son de soin:', e);
+                };
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation du son de soin:', error);
+        }
+    }
+
+    private initSacrificeSound() {
+        try {
+            console.log("Initialisation du son de sacrifice...");
+            this.sacrificeSound = new Audio();
+            this.sacrificeSound.src = '/assets/sound-design/sf_guillotine_04.mp3';
+            if (this.sacrificeSound) {
+                this.sacrificeSound.volume = this.volume * 5;
+                this.sacrificeSound.load();
+                
+                this.sacrificeSound.onloadeddata = () => {
+                    console.log("Son de sacrifice chargé avec succès");
+                };
+                
+                this.sacrificeSound.onerror = (e) => {
+                    console.error('Erreur lors du chargement du son de sacrifice:', e);
+                };
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation du son de sacrifice:', error);
+        }
+    }
+
+    private initShuffleSound() {
+        try {
+            console.log("Initialisation du son de mélange...");
+            this.shuffleSound = new Audio();
+            this.shuffleSound.src = '/assets/sound-design/shuffle_short.wav';
+            if (this.shuffleSound) {
+                this.shuffleSound.volume = this.volume * 15;
+                this.shuffleSound.load();
+                
+                this.shuffleSound.onloadeddata = () => {
+                    console.log("Son de mélange chargé avec succès");
+                };
+                
+                this.shuffleSound.onerror = (e) => {
+                    console.error('Erreur lors du chargement du son de mélange:', e);
+                };
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation du son de mélange:', error);
+        }
+    }
+
     public playBackgroundMusic() {
         if (!this.backgroundMusic || this.isMuted || this.isPlaying) return;
 
@@ -131,6 +229,79 @@ export class AudioManager {
         }
     }
 
+    public playDrawSound() {
+        try {
+            if (this.drawSound && !this.isMuted) {
+                this.drawSound.currentTime = 0;
+                this.drawSound.play().catch(error => {
+                    console.error('Erreur lors de la lecture du son de pioche:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Erreur lors de la lecture du son de pioche:', error);
+        }
+    }
+
+    public playHealSound() {
+        try {
+            if (this.healSound && !this.isMuted) {
+                this.healSound.currentTime = 0;
+                this.healSound.play().catch(error => {
+                    console.error('Erreur lors de la lecture du son de soin:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Erreur lors de la lecture du son de soin:', error);
+        }
+    }
+
+    public playSacrificeSound() {
+        try {
+            if (this.sacrificeSound && !this.isMuted) {
+                this.sacrificeSound.currentTime = 0;
+                this.sacrificeSound.play().catch(error => {
+                    console.error('Erreur lors de la lecture du son de sacrifice:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Erreur lors de la lecture du son de sacrifice:', error);
+        }
+    }
+
+    public playShuffleSound() {
+        try {
+            if (this.shuffleSound && !this.isMuted) {
+                this.shuffleSound.currentTime = 0;
+                this.shuffleSound.play().catch(error => {
+                    console.error('Erreur lors de la lecture du son de mélange:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Erreur lors de la lecture du son de mélange:', error);
+        }
+    }
+
+    public async playSacrificeWithHealSound() {
+        try {
+            if (this.sacrificeSound && this.healSound && !this.isMuted) {
+                this.sacrificeSound.currentTime = 0;
+                await this.sacrificeSound.play();
+                
+                // Attendre un court délai avant de jouer le son de soin
+                setTimeout(() => {
+                    if (this.healSound) {
+                        this.healSound.currentTime = 0;
+                        this.healSound.play().catch(error => {
+                            console.error('Erreur lors de la lecture du son de soin:', error);
+                        });
+                    }
+                }, 300); // Délai de 300ms pour une transition naturelle
+            }
+        } catch (error) {
+            console.error('Erreur lors de la lecture des sons:', error);
+        }
+    }
+
     public stopBackgroundMusic() {
         if (!this.backgroundMusic || !this.isPlaying) return;
 
@@ -163,12 +334,24 @@ export class AudioManager {
     }
 
     public setVolume(value: number) {
-        this.volume = Math.max(0, Math.min(1, value));
+        this.volume = value;
         if (this.backgroundMusic) {
             this.backgroundMusic.volume = this.volume;
         }
         if (this.revolutionSound) {
             this.revolutionSound.volume = this.volume;
+        }
+        if (this.drawSound) {
+            this.drawSound.volume = this.volume * 20;
+        }
+        if (this.healSound) {
+            this.healSound.volume = this.volume * 10;
+        }
+        if (this.sacrificeSound) {
+            this.sacrificeSound.volume = this.volume * 5;
+        }
+        if (this.shuffleSound) {
+            this.shuffleSound.volume = this.volume * 15;
         }
     }
 

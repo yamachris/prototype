@@ -86,6 +86,15 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
       // Calculer le bonus de santé
       let healthBonus = specialCard.value === "Q" ? 2 : 0;
 
+      // Jouer les sons appropriés
+      if (healthBonus > 0) {
+        // Pour la Dame, jouer le son de sacrifice suivi du son de soin
+        AudioManager.getInstance().playSacrificeWithHealSound();
+      } else {
+        // Pour les autres cartes, jouer uniquement le son de sacrifice
+        AudioManager.getInstance().playSacrificeSound();
+      }
+
       // Retirer la carte spéciale de la main ou de la réserve
       const newHand = state.currentPlayer.hand.filter(c => c.id !== specialCard.id);
       const newReserve = state.currentPlayer.reserve.filter(c => c.id !== specialCard.id);
