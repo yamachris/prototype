@@ -1,4 +1,4 @@
-import { Card, Suit, Value } from "../types/game";
+/* import { Card, Suit, Value } from "../types/game";
 
 const SUITS: Suit[] = ["hearts", "diamonds", "clubs", "spades"];
 const VALUES: Value[] = [
@@ -116,7 +116,10 @@ export function handleJokerEffect(
   }
 
   return updatedPlayer;
-}
+} */
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
  /* import { Card, Suit, Value } from '../types/game';
 
@@ -193,3 +196,82 @@ export function handleJokerEffect(
     
     return updatedPlayer;
   } */
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+import { Card, Suit, Value } from '../types/game';
+
+const SUITS: Suit[] = ['diamonds', 'spades']; // Enseignes : Carreau et Pique
+const VALUES: Value[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+export function createDeck(): Card[] {
+  const deck: Card[] = [];
+
+  // Création des cartes pour Carreau et Pique (As jusqu'à Roi)
+  SUITS.forEach((suit) => {
+    const color = suit === 'diamonds' ? 'red' : 'black'; // Couleur selon l'enseigne
+
+    VALUES.forEach(value => {
+      deck.push({
+        id: `${suit}-${value}`, // ID unique
+        type: 'number',
+        value,
+        suit,
+        color,
+      });
+    });
+  });
+
+  // Ajout des deux Jokers pour arriver à 28 cartes
+  deck.push(
+    {
+      id: 'joker-red',
+      type: 'joker',
+      value: 'JOKER',
+      suit: 'special',
+      color: 'red',
+      isRedJoker: true,
+    },
+    {
+      id: 'joker-black',
+      type: 'joker',
+      value: 'JOKER',
+      suit: 'special',
+      color: 'black',
+      isRedJoker: false,
+    }
+  );
+
+  return deck;
+}
+
+// Fonction de mélange
+export function shuffleDeck(deck: Card[]): Card[] {
+  const newDeck = [...deck];
+  for (let i = newDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
+  }
+  return newDeck;
+}
+
+// Fonction pour tirer des cartes
+export function drawCards(deck: Card[], count: number): [Card[], Card[]] {
+  const drawnCards = deck.slice(0, count);
+  const remainingDeck = deck.slice(count);
+  return [remainingDeck, drawnCards];
+}
+
+// Gestion de l'effet du Joker
+export function handleJokerEffect(player: Player, action: 'heal' | 'attack'): Player {
+  const updatedPlayer = { ...player };
+
+  if (action === 'heal') {
+    updatedPlayer.health = Math.min(player.health + 3, player.maxHealth);
+  } else {
+    updatedPlayer.health = Math.max(player.health - 3, 0);
+  }
+
+  return updatedPlayer;
+}

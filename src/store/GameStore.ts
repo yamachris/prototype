@@ -8,6 +8,7 @@ import i18next from "i18next"; // Importez i18next directement
 import i18n from "../i18n/config";
 import { createColumnActions } from "./slices/columnActions";
 import { createRevolutionActions } from "./slices/revolutionActions";
+import { createSacrificeActions } from "./slices/sacrificeActions";
 import { AudioManager } from "../sound-design/audioManager";
 
 // Au début du fichier, après les autres imports
@@ -20,6 +21,7 @@ interface GameState {
   phase: Phase; // Phase actuelle du jeu
   turn: number; // Numéro du tour
   selectedCards: Card[]; // Cartes sélectionnées
+  selectedSacrificeCards: Card[];
   columns: Record<Suit, ColumnState>; // État des colonnes par couleur
   hasDiscarded: boolean; // Indique si le joueur a défaussé
   hasDrawn: boolean; // Indique si le joueur a pioché
@@ -45,6 +47,8 @@ interface GameState {
   blockableColumns: number[];
   canBlock: boolean;
   blockedColumns: number[]; // Indices des colonnes qui ont été bloquées
+  showSacrificePopup: boolean;
+  sacrificeInfo: null;
 }
 
 // Ajout du type pour le store complet
@@ -78,6 +82,8 @@ export interface GameStore extends GameState {
   resetBlockedColumns: () => void;
   handleDestroyColumn: (columnIndex: number) => void;
   handleRevolution: () => void;
+  handleSacrifice: (suit: Suit, specialCard: Card) => void;
+  setSelectedSacrificeCards: (cards: Card[]) => void;
 }
 
 // Création du store avec Zustand
@@ -97,6 +103,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       epithet: "Maître des Cartes",
     },
   },
+  selectedSacrificeCards: [],
   deck: [],
   phase: "setup" as Phase,
   turn: 1,
@@ -169,8 +176,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   blockableColumns: [],
   canBlock: false,
   blockedColumns: [],
+  showSacrificePopup: false,
+  sacrificeInfo: null,
   ...createColumnActions(set),
-  ...createRevolutionActions(set),
+  ...createRevolutionActions(set, get),
+  ...createSacrificeActions(set, get),
 
   initializeGame: () => {
     // Création et mélange du deck complet
@@ -890,6 +900,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
         return state;
       }
 
+      // Vérifier si une attaque a été effectuée ce tour
+      if (state.hasPlayedAction) {
+        return {
+          ...state,
+          selectedCards: [],
+          message: t("game.messages.cannotPlayAfterAction"),
+        };
+      }
+
       // Handle placing a 7 from reserve suit to column
       if (reserveSuitCard?.value === "7" && reserveSuitCard.suit === suit && position === 6) {
         return {
@@ -1433,4 +1452,5 @@ export const useGameStore = create<GameStore>((set, get) => ({
         return "";
     }
   },
+  setSelectedSacrificeCards: (cards: Card[]) => set({ selectedSacrificeCards: cards }),
 }));

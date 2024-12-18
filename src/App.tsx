@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { AudioManager } from './sound-design/audioManager';
+import { SacrificePopup } from './components/SacrificePopup';
 
 export default function App() {
   const { phase, initializeGame, isGameOver } = useGameStore();
@@ -66,6 +67,7 @@ export default function App() {
             <TimeoutWarning />
           </>
         )}
+        <SacrificePopup />
       </div>
     </I18nextProvider>
   );

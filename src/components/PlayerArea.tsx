@@ -44,6 +44,8 @@ interface GameStore extends GameState {
   getState: () => GameStore;
   handleQueenChallenge: (isCorrect: boolean) => void;
   handleCardPlace: (suit: string, index: number) => void;
+  handleSacrifice: (suit: string, card: CardType) => void;
+  setSacrificeMode: (mode: boolean) => void;
 }
 
 export function PlayerArea() {
@@ -152,44 +154,63 @@ export function PlayerArea() {
         <div className="flex justify-between items-start gap-8">
           {/* Main */}
           <div className="flex-1 space-y-2">
-            <div className="flex items-center justify-between px-2">
+            <div className="flex items-center justify-between px-2 relative">
               <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                 {t('game.cards.hand')} ({currentPlayer.hand.length}/5)
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('game.cards.total')} {totalCards}/7 {t('game.cards.hand')}
-                </span>
-                <button
-                  onClick={() => {
-                    setExchangeMode(!exchangeMode);
-                    setSelectedForExchange(null);
-                  }}
-                  className={cn(
-                    "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors",
-                    exchangeMode
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
-                    "hover:bg-blue-200 dark:hover:bg-blue-800"
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('game.cards.total')} {totalCards}/7 {t('game.cards.hand')}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setExchangeMode(!exchangeMode);
+                      setSelectedForExchange(null);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors",
+                      exchangeMode
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                        : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+                      "hover:bg-blue-200 dark:hover:bg-blue-800"
+                    )}
+                  >
+                    <ArrowLeftRight className="w-4 h-4" />
+                    <span>{t('game.actions.exchange')}</span>
+                  </button>
+                  <button
+                    onClick={handleStrategicShuffle}
+                    disabled={!canUseStrategicShuffle}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors mr-4",
+                      canUseStrategicShuffle
+                        ? "bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-800/70 text-purple-600 dark:text-purple-400"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50",
+                      "ring-1 ring-purple-400/50 hover:ring-purple-500"
+                    )}
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>{t('game.ui.strategicShuffle')}</span>
+                  </button>
+                  {selectedCards.length > 0 && selectedCards[0]?.value && (selectedCards[0].value === "K" || selectedCards[0].value === "Q" || selectedCards[0].value === "J") && (
+                    <button
+                      onClick={() => useGameStore.getState().setSacrificeMode(true)}
+                      disabled={hasPlayedAction || phase !== "action"}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors",
+                        !hasPlayedAction && phase === "action"
+                          ? "bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/70 text-red-600 dark:text-red-400"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50",
+                        "ring-1 ring-red-400/50 hover:ring-red-500"
+                      )}
+                      title={t("game.actions.sacrifice.tooltip")}
+                    >
+                      <span>☠️</span>
+                      <span>{t("game.actions.sacrifice.button")}</span>
+                    </button>
                   )}
-                >
-                  <ArrowLeftRight className="w-4 h-4" />
-                  <span>{t('game.actions.exchange')}</span>
-                </button>
-                <button
-                  onClick={handleStrategicShuffle}
-                  disabled={!canUseStrategicShuffle}
-                  className={cn(
-                    "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors",
-                    canUseStrategicShuffle
-                      ? "bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-800/70 text-purple-600 dark:text-purple-400"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50",
-                    "ring-1 ring-purple-400/50 hover:ring-purple-500"
-                  )}
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>{t('game.ui.strategicShuffle')}</span>
-                </button>
+                </div>
               </div>
             </div>
 

@@ -57,11 +57,20 @@ export class AudioManager {
 
     private initRevolutionSound() {
         try {
+            console.log("Initialisation du son de révolution...");
             this.revolutionSound = new Audio();
             this.revolutionSound.src = '/assets/sound-design/effects/revolution normale.wav';
             if (this.revolutionSound) {
                 this.revolutionSound.volume = this.volume;
                 this.revolutionSound.load();
+                
+                // Ajouter des événements pour suivre l'état du chargement
+                this.revolutionSound.onloadeddata = () => {
+                    console.log("Son de révolution chargé avec succès");
+                };
+                this.revolutionSound.onerror = (e) => {
+                    console.error("Erreur de chargement du son de révolution:", e);
+                };
             }
         } catch (error) {
             console.error('Erreur lors de l\'initialisation du son de révolution:', error);
@@ -92,16 +101,30 @@ export class AudioManager {
     }
 
     public playRevolutionSound() {
-        if (!this.revolutionSound || this.isMuted) return;
+        console.log("Tentative de lecture du son de révolution...");
+        console.log("État du son:", {
+            exists: !!this.revolutionSound,
+            isMuted: this.isMuted,
+            volume: this.volume
+        });
+
+        if (!this.revolutionSound || this.isMuted) {
+            console.log("Son non joué car:", !this.revolutionSound ? "non initialisé" : "muté");
+            return;
+        }
 
         try {
+            // Réinitialiser le son pour pouvoir le rejouer
+            this.revolutionSound.currentTime = 0;
             const playPromise = this.revolutionSound.play();
             if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    if (error.name !== 'NotAllowedError') {
+                playPromise
+                    .then(() => {
+                        console.log("Son de révolution joué avec succès");
+                    })
+                    .catch(error => {
                         console.error('Erreur lors de la lecture du son de révolution:', error);
-                    }
-                });
+                    });
             }
         } catch (error) {
             console.error('Erreur lors de la lecture du son de révolution:', error);

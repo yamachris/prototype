@@ -1,6 +1,7 @@
 import { StateCreator } from "zustand";
 import { GameStore } from "../gameStore";
 import { Suit, initialAttackButtons } from "../../types/game";
+import { AudioManager } from "../../sound-design/audioManager";
 
 export const createRevolutionActions: StateCreator<GameStore> = (set) => ({
   checkRevolution: (suit: Suit) => {
@@ -9,6 +10,10 @@ export const createRevolutionActions: StateCreator<GameStore> = (set) => ({
 
       // Vérifie si la colonne est complète (10 cartes)
       if (column.cards.length === 10) {
+        // Jouer le son de révolution
+        const audioManager = AudioManager.getInstance();
+        audioManager.playRevolutionSound();
+
         // Récupérer la carte de reserveSuit si elle existe
         const reserveSuitCard = column.reserveSuit;
 

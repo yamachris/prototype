@@ -32,7 +32,23 @@ export type Card = {
   isRedJoker?: boolean;
 };
 
-export interface GameState {
+export interface SacrificeInfo {
+  sacrificedCards: Card[];
+  specialCard: Card;
+  healthBonus: number;
+}
+
+export interface SacrificeState {
+  showSacrificePopup: boolean;
+  availableCards: Card[];
+}
+
+export interface SacrificeActions {
+  setSacrificeMode: (mode: boolean) => void;
+  sacrificeSpecialCard: (selectedCards: Card[]) => void;
+}
+
+export interface GameState extends SacrificeState {
   currentPlayer: Player;
   phase: Phase;
   isPlayerTurn: boolean;
@@ -51,6 +67,7 @@ export interface GameState {
   winner: string | null;
   canEndTurn: boolean;
   language: string;
+  sacrificeInfo: SacrificeInfo | null;
 }
 
 export interface GameStore extends GameState {
