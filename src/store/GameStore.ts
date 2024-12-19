@@ -11,6 +11,7 @@ import i18n from "../i18n/config";
 import { createColumnActions } from "./slices/columnActions";
 import { createRevolutionActions } from "./slices/revolutionActions";
 import { createSacrificeActions } from "./slices/sacrificeActions";
+import { createKingDefenseActions } from "./slices/kingDefense"; // Importer les actions du Roi
 
 // Au début du fichier, après les autres imports
 const t = (key: string) => i18next.t(key);
@@ -182,6 +183,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ...createColumnActions(set),
   ...createRevolutionActions(set, get),
   ...createSacrificeActions(set, get),
+  ...createKingDefenseActions(set, get), // Intégrer les actions du Roi
 
   initializeGame: () => {
     // Création et mélange du deck complet
@@ -1324,6 +1326,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set((state) => {
       if (state.phase !== "action" || state.hasPlayedAction) return state;
 
+      // Vérifier d'abord si un Roi bloque l'attaque
+      const isKingInvolved = get().handleAttackWithKing(clickedAttackCard, clickedAttackCard.suit);
+      if (isKingInvolved) {
+        return state; // L'attaque a été gérée par la logique du Roi
+      }
+
+      // Si aucun Roi n'est impliqué, continuer avec la logique d'attaque normale
       const currentSuit = clickedAttackCard.suit;
 
       // Trouver le bouton cliqué
