@@ -6,6 +6,7 @@ export class AudioManager {
     private healSound: HTMLAudioElement | null = null;
     private sacrificeSound: HTMLAudioElement | null = null;
     private shuffleSound: HTMLAudioElement | null = null;
+    private cardSound: HTMLAudioElement | null = null;
     private isMuted: boolean = false;
     private volume: number = 0.03;
     private isPlaying: boolean = false;
@@ -17,6 +18,7 @@ export class AudioManager {
         this.initHealSound();
         this.initSacrificeSound();
         this.initShuffleSound();
+        this.initCardSound();
     }
 
     public static getInstance(): AudioManager {
@@ -175,6 +177,28 @@ export class AudioManager {
         }
     }
 
+    private initCardSound() {
+        try {
+            console.log("Initialisation du son de carte...");
+            this.cardSound = new Audio();
+            this.cardSound.src = '/assets/sound-design/PoserUneCarte.wav';
+            if (this.cardSound) {
+                this.cardSound.volume = this.volume * 15;
+                this.cardSound.load();
+                
+                this.cardSound.onloadeddata = () => {
+                    console.log("Son de carte chargé avec succès");
+                };
+                
+                this.cardSound.onerror = (e) => {
+                    console.error('Erreur lors du chargement du son de carte:', e);
+                };
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation du son de carte:', error);
+        }
+    }
+
     public playBackgroundMusic() {
         if (!this.backgroundMusic || this.isMuted || this.isPlaying) return;
 
@@ -281,6 +305,19 @@ export class AudioManager {
         }
     }
 
+    public playCardSound() {
+        try {
+            if (this.cardSound && !this.isMuted) {
+                this.cardSound.currentTime = 0;
+                this.cardSound.play().catch(error => {
+                    console.error('Erreur lors de la lecture du son de carte:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Erreur lors de la lecture du son de carte:', error);
+        }
+    }
+
     public async playSacrificeWithHealSound() {
         try {
             if (this.sacrificeSound && this.healSound && !this.isMuted) {
@@ -352,6 +389,9 @@ export class AudioManager {
         }
         if (this.shuffleSound) {
             this.shuffleSound.volume = this.volume * 15;
+        }
+        if (this.cardSound) {
+            this.cardSound.volume = this.volume * 15;
         }
     }
 

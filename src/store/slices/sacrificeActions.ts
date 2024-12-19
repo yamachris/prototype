@@ -52,6 +52,35 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
     });
   },
 
+  performSacrifice: (selectedCards: Card[]) => {
+    const state = get();
+    const specialCard = state.selectedCards[0];
+    
+    if (!specialCard || selectedCards.length === 0) return;
+
+    // Vérifier le nombre de cartes requis
+    const requiredCards = specialCard.value === "K" ? 3 : specialCard.value === "Q" ? 2 : 1;
+    if (selectedCards.length !== requiredCards) return;
+
+    const result = get().sacrificeSpecialCard(selectedCards);
+
+    // Si le sacrifice a réussi, piocher automatiquement si nécessaire
+    if (result) {
+      const totalCards = result.currentPlayer.hand.length + result.currentPlayer.reserve.length;
+      if (totalCards < 7) {
+        const [remainingDeck, drawnCards] = drawCards(result.deck, 1);
+        set({
+          deck: remainingDeck,
+          currentPlayer: {
+            ...result.currentPlayer,
+            hand: [...result.currentPlayer.hand, ...drawnCards]
+          },
+          message: `${result.message} Vous avez pioché une carte pour compléter votre main.`
+        });
+      }
+    }
+  },
+
   sacrificeSpecialCard: (selectedCards: Card[]) => {
     const state = get();
     const specialCard = state.selectedCards[0];
@@ -105,6 +134,12 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
         cardsToDiscard.push(specialCard);
       }
 
+      // Construire le message final
+      const actionMessage = specialCard.value === "K" ? "Roi placé après sacrifice de 3 unités" :
+                          specialCard.value === "Q" ? "Dame sacrifiée, +2 points de vie" :
+                          "Valet placé après sacrifice";
+      const message = `${actionMessage}. Cliquez sur 'Fin du tour' pour continuer.`;
+
       return {
         columns: updatedColumns,
         currentPlayer: {
@@ -118,10 +153,10 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
         selectedCards: [],
         showSacrificePopup: false,
         hasPlayedAction: true,
-        availableCards: [], // Réinitialiser les cartes disponibles
-        message: specialCard.value === "K" ? "Roi placé après sacrifice de 3 unités" :
-                specialCard.value === "Q" ? "Dame sacrifiée, +2 points de vie" :
-                "Valet placé après sacrifice"
+        playedCardsLastTurn: 1,
+        availableCards: [],
+        message,
+        canEndTurn: true
       };
     });
   }

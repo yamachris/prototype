@@ -927,6 +927,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       // Handle placing a 7 from reserve suit to column
       if (reserveSuitCard?.value === "7" && reserveSuitCard.suit === suit && position === 6) {
+        // Jouer le son de carte
+        AudioManager.getInstance().playCardSound();
         return {
           ...state,
           hasPlayedAction: true,
@@ -948,6 +950,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Handle placing a 7 from hand/reserve to reserve suit
       const selectedCard = state.selectedCards.find((card) => card.value === "7" || card.type === "joker");
       if (selectedCard && position === 6) {
+        // Jouer le son de carte
+        AudioManager.getInstance().playCardSound();
         const updatedColumns = {
           ...state.columns,
           [suit]: {
@@ -998,6 +1002,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
           // Pour les têtes, on vérifie uniquement la couleur, pas l'activation
           if (faceCard?.suit === suit) {
+            // Jouer le son de carte
+            AudioManager.getInstance().playCardSound();
             const newHand = state.currentPlayer.hand.filter(
               (card) => !state.selectedCards.some((selected) => selected.id === card.id)
             );
@@ -1039,6 +1045,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           const activator = state.selectedCards.find((card) => card.type === "joker" || card.value === "7");
 
           if (ace?.suit === suit && (column.cards.length === 0 || !column.hasLuckyCard)) {
+            // Jouer le son de carte
+            AudioManager.getInstance().playCardSound();
             // Réinitialiser le blocage pour cette colonne car c'est un nouveau cycle
             const newBlockedColumns = state.blockedColumns.filter((i) => {
               const columnSuit = Object.keys(state.columns)[i];
@@ -1101,6 +1109,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
             };
           }
 
+          // Jouer le son de carte
+          AudioManager.getInstance().playCardSound();
           // Placement dans reserveSuit uniquement pour 7 et Joker
           const newHand = state.currentPlayer.hand.filter((c) => c.id !== card.id);
           const newReserve = state.currentPlayer.reserve.filter((c) => c.id !== card.id);
@@ -1144,6 +1154,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           return state;
         }
 
+        // Jouer le son de carte
+        AudioManager.getInstance().playCardSound();
         // Placement normal dans la séquence
         const newHand = state.currentPlayer.hand.filter((c) => c.id !== card.id);
         const newReserve = state.currentPlayer.reserve.filter((c) => c.id !== card.id);
@@ -1213,15 +1225,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
           };
         }
       }
-
-      // Si la colonne est complète, on active le blocage
-      // if (newColumn.cards.length === 7) {
-      //   set((state) => ({
-      //     ...state,
-      //     blockableColumns: [...state.blockableColumns, position],
-      //     canBlock: true,
-      //   }));
-      // }
 
       return state;
     });
