@@ -9,6 +9,7 @@ export class AudioManager {
     private cardSound: HTMLAudioElement | null = null;
     private isMuted: boolean = false;
     private volume: number = 0.03;
+    private revolutionVolume: number = 0.5;
     private isPlaying: boolean = false;
 
     private constructor() {
@@ -71,7 +72,7 @@ export class AudioManager {
             this.revolutionSound = new Audio();
             this.revolutionSound.src = '/assets/sound-design/effects/revolution normale.wav';
             if (this.revolutionSound) {
-                this.revolutionSound.volume = this.volume;
+                this.revolutionSound.volume = this.revolutionVolume;
                 this.revolutionSound.load();
                 
                 // Ajouter des événements pour suivre l'état du chargement
@@ -376,7 +377,7 @@ export class AudioManager {
             this.backgroundMusic.volume = this.volume;
         }
         if (this.revolutionSound) {
-            this.revolutionSound.volume = this.volume;
+            this.revolutionSound.volume = this.revolutionVolume;
         }
         if (this.drawSound) {
             this.drawSound.volume = this.volume * 20;

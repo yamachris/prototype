@@ -12,6 +12,7 @@ import { createColumnActions } from "./slices/columnActions";
 import { createRevolutionActions } from "./slices/revolutionActions";
 import { createSacrificeActions } from "./slices/sacrificeActions";
 import { createKingDefenseActions } from "./slices/kingDefense"; // Importer les actions du Roi
+import { handleValetAttack } from "./slices/valetActions"; // Importer handleValetAttack
 
 // Au début du fichier, après les autres imports
 const t = (key: string) => i18next.t(key);
@@ -59,7 +60,7 @@ export interface GameStore extends GameState {
   handleDiscard: (card: CardType) => void;
   handleDrawCard: () => void;
   exchangeCards: (card1: CardType, card2: CardType) => void;
-  handleJokerAction: (joker: CardType, action: "heal" | "attack") => void;
+  handleJokerAction: (jokerCard: CardType, action: "heal" | "attack") => void;
   setAttackMode: (mode: boolean) => void;
   setMessage: (message: string) => void;
   handleStrategicShuffle: () => void;
@@ -79,7 +80,7 @@ export interface GameStore extends GameState {
     playedCardsLastTurn: number
   ) => string;
   checkRevolution: (suit: Suit) => void;
-  handleAttack: (card: Card, canAttack: CanAttack) => void;
+  handleAttack: (card: Card | string) => void;
   handleBlock: (columnIndex: number) => void;
   resetBlockedColumns: () => void;
   handleDestroyColumn: (columnIndex: number) => void;
@@ -640,7 +641,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   updatePhaseAndMessage: (phase: Phase) => {
     set((state) => {
       const messages = {
-        setup: "🎮 Phase de préparation : Choisissez vos 2 cartes de réserve",
+        setup: " Phase de préparation : Choisissez vos 2 cartes de réserve",
         discard:
           state.turn === 1
             ? " Pour commencer la partie, veuillez défausser votre première carte"
@@ -758,12 +759,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   endTurn: () => {
     set((state) => {
-      // Calculer combien de cartes manquent pour avoir 7 cartes
-      const totalCards = state.currentPlayer.hand.length + state.currentPlayer.reserve.length;
+      const updatedColumns = { ...state.columns };
+      
+      // Réinitialiser l'état des Valets au début du tour
+      Object.keys(updatedColumns).forEach(suit => {
+        const valet = updatedColumns[suit].faceCards?.J;
+        if (valet) {
+          if (valet.activatedBy === 'seven' && !valet.hasAttacked) {
+            // Si le Valet a été activé avec un 7 et n'a pas encore attaqué
+            updatedColumns[suit].faceCards.J = {
+              ...valet,
+              canAttackNextTurn: true,
+              state: 'active'
+            };
+          } else if (valet.hasAttacked) {
+            // Si le Valet a attaqué, il doit attendre un tour
+            updatedColumns[suit].faceCards.J = {
+              ...valet,
+              canAttackNextTurn: !valet.canAttackNextTurn // Alterne entre true et false
+            };
+          }
+        }
+      });
+
       const nextPhase = state.nextPhase || (state.playedCardsLastTurn > 0 ? "draw" : "discard");
 
       return {
         ...state,
+        columns: updatedColumns,
         phase: nextPhase,
         turn: state.turn + 1,
         hasDiscarded: nextPhase === "discard" ? false : true,
@@ -1228,6 +1251,114 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }
 
+      // Gestion spéciale pour le Valet (J)
+      if (card.value === "J") {
+        // Si le Valet est joué avec un 7
+        if (state.selectedCards.some((c) => c.value === "7")) {
+          const updatedColumns = { ...state.columns };
+          updatedColumns[suit].faceCards.J = {
+            ...card,
+            activatedBy: 'seven',
+            canAttackImmediately: false,
+            canAttackNextTurn: false, // Sera mis à true au prochain tour
+            hasAttacked: false,
+            state: 'passive'
+          };
+
+          // Remove cards from hand/reserve
+          const newHand = state.currentPlayer.hand.filter(
+            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
+          );
+          const newReserve = state.currentPlayer.reserve.filter(
+            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
+          );
+
+          return {
+            ...state,
+            columns: updatedColumns,
+            currentPlayer: {
+              ...state.currentPlayer,
+              hand: newHand,
+              reserve: newReserve,
+              discardPile: [...state.currentPlayer.discardPile, state.selectedCards.find((c) => c.value === "7")],
+            },
+            selectedCards: [],
+            hasPlayedAction: true,
+            playedCardsLastTurn: 2,
+            message: t("game.messages.valetPlacedPassive")
+          };
+        } 
+        // Si le Valet est joué avec un JOKER ou un sacrifice
+        else if (state.selectedCards.some((c) => c.type === "joker") || state.selectedSacrificeCards.length > 0) {
+          const updatedColumns = { ...state.columns };
+          const activator = state.selectedCards.some((c) => c.type === "joker") ? 'joker' : 'sacrifice';
+          
+          updatedColumns[suit].faceCards.J = {
+            ...card,
+            activatedBy: activator,
+            canAttackImmediately: true, // Peut attaquer immédiatement
+            canAttackNextTurn: true,
+            hasAttacked: false,
+            state: 'active'
+          };
+
+          // Remove cards from hand/reserve
+          const newHand = state.currentPlayer.hand.filter(
+            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
+          );
+          const newReserve = state.currentPlayer.reserve.filter(
+            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
+          );
+
+          return {
+            ...state,
+            columns: updatedColumns,
+            currentPlayer: {
+              ...state.currentPlayer,
+              hand: newHand,
+              reserve: newReserve,
+              discardPile: [...state.currentPlayer.discardPile, state.selectedCards.find((c) => c.type === "joker")],
+            },
+            selectedCards: [],
+            hasPlayedAction: true,
+            playedCardsLastTurn: 2,
+            message: t("game.messages.valetPlacedActive")
+          };
+        }
+        // Dans tous les autres cas (déjà en jeu et n'a pas encore attaqué)
+        else if (!state.columns[suit].faceCards.J?.state) {
+          const updatedColumns = { ...state.columns };
+          updatedColumns[suit].faceCards.J = {
+            ...card,
+            state: 'active' // Le Valet reste actif tant qu'il n'a pas attaqué
+          };
+
+          // Remove cards from hand/reserve
+          const newHand = state.currentPlayer.hand.filter(
+            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
+          );
+          const newReserve = state.currentPlayer.reserve.filter(
+            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
+          );
+
+          return {
+            ...state,
+            columns: updatedColumns,
+            currentPlayer: {
+              ...state.currentPlayer,
+              hand: newHand,
+              reserve: newReserve,
+            },
+            selectedCards: [],
+            hasPlayedAction: true,
+            playedCardsLastTurn: 1,
+            message: t("game.messages.faceCardPlaced", {
+              value: "Valet",
+            }),
+          };
+        }
+      }
+
       return state;
     });
   },
@@ -1326,6 +1457,53 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set((state) => {
       if (state.phase !== "action" || state.hasPlayedAction) return state;
 
+      // Logique spécifique pour l'attaque du Valet
+      if (clickedAttackCard.value === "J") {
+        const column = state.columns[clickedAttackCard.suit] || {
+          cards: [],
+          faceCards: {},
+          attackStatus: {
+            lastAttackCard: null,
+            attackButtons: []
+          }
+        };
+        
+        const valet = column.faceCards?.J;
+        
+        if (!valet || valet.state === 'passive') {
+          return {
+            ...state,
+            message: t("game.messages.valetCannotAttack")
+          };
+        }
+
+        // Utiliser handleValetAttack pour gérer l'attaque
+        const stateAfterAttack = handleValetAttack(state, clickedAttackCard, column.cards || [], clickedAttackCard.suit);
+        
+        // Mettre le Valet en mode passif après l'attaque
+        const updatedColumns = { ...stateAfterAttack.columns };
+        if (updatedColumns[clickedAttackCard.suit]?.faceCards?.J) {
+          updatedColumns[clickedAttackCard.suit].faceCards.J = {
+            ...updatedColumns[clickedAttackCard.suit].faceCards.J,
+            state: 'passive'
+          };
+        }
+
+        // Calculer le nombre de cartes détruites
+        const cardsDestroyedCount = stateAfterAttack.currentPlayer.discardPile.length - state.currentPlayer.discardPile.length;
+
+        return {
+          ...stateAfterAttack,
+          columns: updatedColumns,
+          hasPlayedAction: true,
+          playedCardsLastTurn: 0,
+          message: t("game.messages.valetAttack", {
+            count: cardsDestroyedCount,
+            suit: clickedAttackCard.suit
+          })
+        };
+      }
+
       // Vérifier d'abord si un Roi bloque l'attaque
       const isKingInvolved = get().handleAttackWithKing(clickedAttackCard, clickedAttackCard.suit);
       if (isKingInvolved) {
@@ -1336,7 +1514,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const currentSuit = clickedAttackCard.suit;
 
       // Trouver le bouton cliqué
-      const buttonsState = state.columns[currentSuit].attackStatus.attackButtons;
+      const buttonsState = state.columns[currentSuit]?.attackStatus?.attackButtons || [];
 
       const clickedButtonState = buttonsState.find((button) => button.id === clickedAttackCard.value);
 
@@ -1353,6 +1531,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
 
       const updatedColumns = { ...state.columns };
+      if (!updatedColumns[currentSuit]) {
+        updatedColumns[currentSuit] = {
+          cards: [],
+          faceCards: {},
+          attackStatus: {
+            lastAttackCard: null,
+            attackButtons: []
+          }
+        };
+      }
 
       updatedColumns[currentSuit].attackStatus = {
         lastAttackCard: clickedAttackCard.value,

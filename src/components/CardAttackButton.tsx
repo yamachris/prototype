@@ -39,7 +39,10 @@ export function CardAttackButton({ attackCard, currentPlayedCard }: CardAttackBu
 
   const isEnabled = phase == "action" && !hasPlayedAction;
 
-  const iconClass = cn("w-5 h-5 pl-50 absolute right-[25%]", isEnabled ? "text-red-700  " : "text-gray-700 ");
+  const iconClass = cn(
+    "w-5 h-5 pl-50 absolute right-[25%]", 
+    isEnabled ? "text-red-700 animate-pulse transition-opacity duration-1000" : "text-gray-700"
+  );
 
   if (isActive && localState.canAttackNow) return <Swords onClick={handleAttackClick} className={iconClass} />;
 }

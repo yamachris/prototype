@@ -8,6 +8,7 @@ import { CardExchangeButton } from "./CardExchangeButton";
 import { PlaceSevenButton } from "./PlaceSevenButton";
 import { CardAttackButton } from "./CardAttackButton";
 import { BlockButton } from "./BlockButton";
+import { ValetAttackButton } from "./ValetAttackButton";
 
 interface UnitColumnProps {
   suit: Suit;
@@ -138,6 +139,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
     const isAs = value === "A";
 
     const attackCard = column.cards.find((card) => card.value === value);
+    const isValet = value === "J" && cardInSlot;
 
     return (
       <div key={value}>
@@ -174,8 +176,13 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
               </span>
             </>
           )}
-          {(attackCard ? true : false) && (
+          {/* Afficher l'épée d'attaque pour les unités normales */}
+          {(attackCard ? true : false) && !isValet && (
             <CardAttackButton attackCard={attackCard} currentPlayedCard={column.cards[column.cards.length - 1]} />
+          )}
+          {/* Afficher l'épée d'attaque pour le Valet */}
+          {isValet && cardInSlot && (
+            <ValetAttackButton valetCard={cardInSlot} columnSuit={suit} />
           )}
         </div>
       </div>
@@ -244,17 +251,28 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
           {/* Valet */}
           <div
             className={cn(
-              "flex flex-col items-center justify-center py-2 rounded-lg",
+              "flex flex-col items-center justify-center py-2 rounded-lg relative",
               column.faceCards?.J ? "bg-gray-100 dark:bg-gray-800" : "bg-gray-50 dark:bg-[rgb(26,33,47)]"
             )}>
-            <Sword className="w-4 h-4 text-gray-500 dark:text-[#404859]" />
-            <span
-              className={cn(
-                "text-xs mt-1",
-                column.faceCards?.J?.color === "red" ? "text-red-500" : "text-gray-500 dark:text-[#404859]"
-              )}>
-              {column.faceCards?.J ? "J" : "Valet"}
-            </span>
+            <div className="flex flex-col items-center space-y-1 relative w-full">
+              <Sword className="w-4 h-4 text-gray-500 dark:text-[#404859]" />
+              {/* Ajouter l'épée dorée si un Valet est présent */}
+              {column.faceCards?.J && (
+                <div className={cn(
+                  'absolute right-[15%] top-[50%] -translate-y-[50%]',
+                  column.faceCards.J.state === 'active' ? 'animate-pulse' : 'text-gray-400'
+                )}>
+                  <ValetAttackButton valetCard={column.faceCards.J} columnSuit={suit} />
+                </div>
+              )}
+              <span
+                className={cn(
+                  "text-xs",
+                  column.faceCards?.J?.color === "red" ? "text-red-500" : "text-gray-500 dark:text-[#404859]"
+                )}>
+                {column.faceCards?.J ? "J" : "Valet"}
+              </span>
+            </div>
           </div>
 
           {/* Roi */}

@@ -91,7 +91,7 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
     const requiredCards = specialCard.value === "K" ? 3 : specialCard.value === "Q" ? 2 : 1;
     if (selectedCards.length !== requiredCards) return;
 
-    AudioManager.getInstance().playRevolutionSound();
+    // AudioManager.getInstance().playRevolutionSound();  // Retirer le son de révolution
 
     set(state => {
       // Retirer les cartes sacrifiées des colonnes
@@ -99,7 +99,13 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
       selectedCards.forEach(card => {
         const column = updatedColumns[card.suit];
         if (column) {
-          column.cards = column.cards.filter(c => c.id !== card.id);
+          // Garder l'état hasLuckyCard, reserveSuit et activatorType tout en retirant la carte
+          const newCards = column.cards.filter(c => c.id !== card.id);
+          column.cards = newCards;
+          // Préserver l'état d'activation de la colonne
+          column.hasLuckyCard = column.hasLuckyCard;
+          column.reserveSuit = column.reserveSuit;
+          column.activatorType = column.activatorType;
         }
       });
 

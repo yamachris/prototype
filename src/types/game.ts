@@ -4,6 +4,7 @@ export type StandardValue = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" 
 export type Value = StandardValue | "JOKER";
 export type ActivatorType = "7" | "JOKER" | null;
 export type CardColor = "red" | "black";
+export type ValetCardState = "active" | "passive";
 
 export type attackCardButton = {
   id: string;
@@ -30,6 +31,7 @@ export type Card = {
   type: "standard" | "joker";
   color: CardColor;
   isRedJoker?: boolean;
+  state?: ValetCardState; // État du Valet (uniquement pour les cartes J)
 };
 
 export interface SacrificeInfo {

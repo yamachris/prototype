@@ -18,7 +18,11 @@
       "queenHealing": "La Dame vous soigne de {{amount}} PV !",
       "queenChallengeResult": "Défi {{result}} ! Vous gagnez {{amount}} PV ❤️",
       "queenChallengeStart": "Défi de la Bonne Dame lancé !",
-      "cardExchanged": "Cartes échangées"
+      "cardExchanged": "Cartes échangées",
+      "valetAttack": "Le Valet a détruit {{count}} cartes de la colonne {{suit}} !",
+      "valetCannotAttack": "Le Valet ne peut pas attaquer maintenant",
+      "valetPassive": "Valet passif - Ne peut pas attaquer ce tour",
+      "valetActive": "Cliquez pour attaquer avec le Valet"
     },
     "gameOver": {
       "title": "Partie Terminée",
