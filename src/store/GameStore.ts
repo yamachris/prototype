@@ -81,6 +81,7 @@ export interface GameStore extends GameState {
   ) => string;
   checkRevolution: (suit: Suit) => void;
   handleAttack: (card: Card | string) => void;
+  activateCardAttackButton: (card: Card) => void;
   handleBlock: (columnIndex: number) => void;
   resetBlockedColumns: () => void;
   handleDestroyColumn: (columnIndex: number) => void;
@@ -121,7 +122,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reserveSuit: null,
       isReserveSuitLocked: false,
       faceCards: {},
-      attackStatus: { attackButtons: initialAttackButtons },
+      attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
     },
     diamonds: {
       cards: [],
@@ -132,7 +133,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reserveSuit: null,
       isReserveSuitLocked: false,
       faceCards: {},
-      attackStatus: { attackButtons: initialAttackButtons },
+      attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
     },
     clubs: {
       cards: [],
@@ -143,7 +144,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reserveSuit: null,
       isReserveSuitLocked: false,
       faceCards: {},
-      attackStatus: { attackButtons: initialAttackButtons },
+      attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
     },
     spades: {
       cards: [],
@@ -154,7 +155,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reserveSuit: null,
       isReserveSuitLocked: false,
       faceCards: {},
-      attackStatus: { attackButtons: initialAttackButtons },
+      attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
     },
   },
   hasDiscarded: false,
@@ -189,14 +190,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   initializeGame: () => {
     // Création et mélange du deck complet
     const fullDeck = shuffleDeck(createDeck());
-    
+
     // Distribution aléatoire de 7 cartes
     const [remainingDeck, initialHand] = drawCards(fullDeck, 7);
 
     set({
       currentPlayer: {
-        id: 'player-1',
-        name: 'Joueur 1',
+        id: "player-1",
+        name: "Joueur 1",
         health: 10,
         maxHealth: 10,
         hand: initialHand,
@@ -205,25 +206,65 @@ export const useGameStore = create<GameStore>((set, get) => ({
         deck: remainingDeck,
         hasUsedStrategicShuffle: false,
         profile: {
-          epithet: 'Maître des Cartes'
-        }
+          epithet: "Maître des Cartes",
+        },
       },
       deck: remainingDeck,
-      phase: 'setup',
+      phase: "setup",
       turn: 1,
       selectedCards: [],
       columns: {
-        hearts: { cards: [], isLocked: false, hasLuckyCard: false, activatorType: null, sequence: [], reserveSuit: null, isReserveSuitLocked: false, faceCards: {}, attackStatus: { attackButtons: initialAttackButtons } },
-        diamonds: { cards: [], isLocked: false, hasLuckyCard: false, activatorType: null, sequence: [], reserveSuit: null, isReserveSuitLocked: false, faceCards: {}, attackStatus: { attackButtons: initialAttackButtons } },
-        clubs: { cards: [], isLocked: false, hasLuckyCard: false, activatorType: null, sequence: [], reserveSuit: null, isReserveSuitLocked: false, faceCards: {}, attackStatus: { attackButtons: initialAttackButtons } },
-        spades: { cards: [], isLocked: false, hasLuckyCard: false, activatorType: null, sequence: [], reserveSuit: null, isReserveSuitLocked: false, faceCards: {}, attackStatus: { attackButtons: initialAttackButtons } }
+        hearts: {
+          cards: [],
+          isLocked: false,
+          hasLuckyCard: false,
+          activatorType: null,
+          sequence: [],
+          reserveSuit: null,
+          isReserveSuitLocked: false,
+          faceCards: {},
+          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
+        },
+        diamonds: {
+          cards: [],
+          isLocked: false,
+          hasLuckyCard: false,
+          activatorType: null,
+          sequence: [],
+          reserveSuit: null,
+          isReserveSuitLocked: false,
+          faceCards: {},
+          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
+        },
+        clubs: {
+          cards: [],
+          isLocked: false,
+          hasLuckyCard: false,
+          activatorType: null,
+          sequence: [],
+          reserveSuit: null,
+          isReserveSuitLocked: false,
+          faceCards: {},
+          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
+        },
+        spades: {
+          cards: [],
+          isLocked: false,
+          hasLuckyCard: false,
+          activatorType: null,
+          sequence: [],
+          reserveSuit: null,
+          isReserveSuitLocked: false,
+          faceCards: {},
+          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
+        },
       },
       hasDiscarded: false,
       hasDrawn: false,
       hasPlayedAction: false,
       playedCardsLastTurn: 0,
       attackMode: false,
-      message: '',
+      message: "",
       isGameOver: false,
       winner: null,
       canEndTurn: true,
@@ -231,7 +272,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       awaitingStrategicShuffleConfirmation: false,
       queenChallenge: {
         isActive: false,
-        queen: null
+        queen: null,
       },
       isMessageClickable: false,
       exchangeMode: false,
@@ -239,7 +280,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       showRevolutionPopup: false,
       blockableColumns: [],
       canBlock: false,
-      blockedColumns: []
+      blockedColumns: [],
     });
   },
 
@@ -413,31 +454,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
         return state;
       }
 
+      const nextPhase = state.currentPlayer.reserve.length + state.currentPlayer.hand.length !== 7 ? "draw" : "discard";
+      console.log("nextPhase ", nextPhase);
+
       // Si on a joué des cartes au tour précédent, on passe directement à la phase de pioche
-      if (state.playedCardsLastTurn > 0) {
-        return {
-          ...state,
-          phase: "draw", // On passe directement à la pioche
-          hasDiscarded: true, // On marque la défausse comme déjà faite
-          hasDrawn: false,
-          hasPlayedAction: false,
-          currentPlayer: {
-            ...state.currentPlayer,
-            hasUsedStrategicShuffle: false,
-          },
-          selectedCards: [],
-          turn: state.turn + 1,
-          message: t("game.messages.drawPhase"),
-          canBlock: false,
-          blockableColumns: [],
-        };
-      }
+      // if (state.playedCardsLastTurn > 0) {
+      //   return {
+      //     ...state,
+      //     phase: "draw", // On passe directement à la pioche
+      //     hasDiscarded: true, // On marque la défausse comme déjà faite
+      //     hasDrawn: false,
+      //     hasPlayedAction: false,
+      //     currentPlayer: {
+      //       ...state.currentPlayer,
+      //       hasUsedStrategicShuffle: false,
+      //     },
+      //     selectedCards: [],
+      //     turn: state.turn + 1,
+      //     message: t("game.messages.drawPhase"),
+      //     canBlock: false,
+      //     blockableColumns: [],
+      //   };
+      // }
 
       // Si on n'a pas joué de cartes
+
       return {
         ...state,
-        phase: "discard",
-        hasDiscarded: false,
+        phase: nextPhase,
+        // hasDiscarded: false,
+        hasDiscarded: nextPhase === "discard" ? false : true,
+
         hasDrawn: false,
         hasPlayedAction: false,
         currentPlayer: {
@@ -446,7 +493,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
         selectedCards: [],
         turn: state.turn + 1,
-        message: t("game.messages.discardPhase"),
+        // message: t("game.messages.discardPhase"),
+        message: nextPhase === "discard" ? t("game.messages.discardPhase") : t("game.messages.drawPhase"),
+
         canBlock: false,
         blockableColumns: [],
       };
@@ -474,8 +523,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set((state) => ({
       ...state,
       isGameOver: true,
-      winner: 'opponent',
-      message: "Vous avez abandonné la partie"
+      winner: "opponent",
+      message: "Vous avez abandonné la partie",
     }));
   },
 
@@ -760,23 +809,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
   endTurn: () => {
     set((state) => {
       const updatedColumns = { ...state.columns };
-      
+
       // Réinitialiser l'état des Valets au début du tour
-      Object.keys(updatedColumns).forEach(suit => {
+      Object.keys(updatedColumns).forEach((suit) => {
         const valet = updatedColumns[suit].faceCards?.J;
         if (valet) {
-          if (valet.activatedBy === 'seven' && !valet.hasAttacked) {
+          if (valet.activatedBy === "seven" && !valet.hasAttacked) {
             // Si le Valet a été activé avec un 7 et n'a pas encore attaqué
             updatedColumns[suit].faceCards.J = {
               ...valet,
               canAttackNextTurn: true,
-              state: 'active'
+              state: "active",
             };
           } else if (valet.hasAttacked) {
             // Si le Valet a attaqué, il doit attendre un tour
             updatedColumns[suit].faceCards.J = {
               ...valet,
-              canAttackNextTurn: !valet.canAttackNextTurn // Alterne entre true et false
+              canAttackNextTurn: !valet.canAttackNextTurn, // Alterne entre true et false
             };
           }
         }
@@ -1022,8 +1071,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const hasActivator = state.selectedCards.some((card) => card.type === "joker" || card.value === "7");
 
         if (hasFaceCard && hasActivator) {
-          const faceCard = state.selectedCards.find((card) => card.value === "J" || card.value === "K");
-          const activator = state.selectedCards.find((card) => card.type === "joker" || card.value === "7");
+          var faceCard = state.selectedCards.find((card) => card.value === "J" || card.value === "K");
+          // const activator = state.selectedCards.find((card) => card.type === "joker" || card.value === "7");
+          const activator = state.selectedCards.some((c) => c.type === "joker") ? "joker" : "seven";
 
           // Pour les têtes, on vérifie uniquement la couleur, pas l'activation
           if (faceCard?.suit === suit) {
@@ -1044,7 +1094,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
                   ...column,
                   faceCards: {
                     ...column.faceCards,
-                    [faceCard.value]: faceCard,
+                    [faceCard.value]: { ...faceCard, activatedBy: activator },
                   },
                 },
               },
@@ -1251,114 +1301,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }
 
-      // Gestion spéciale pour le Valet (J)
-      if (card.value === "J") {
-        // Si le Valet est joué avec un 7
-        if (state.selectedCards.some((c) => c.value === "7")) {
-          const updatedColumns = { ...state.columns };
-          updatedColumns[suit].faceCards.J = {
-            ...card,
-            activatedBy: 'seven',
-            canAttackImmediately: false,
-            canAttackNextTurn: false, // Sera mis à true au prochain tour
-            hasAttacked: false,
-            state: 'passive'
-          };
-
-          // Remove cards from hand/reserve
-          const newHand = state.currentPlayer.hand.filter(
-            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
-          );
-          const newReserve = state.currentPlayer.reserve.filter(
-            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
-          );
-
-          return {
-            ...state,
-            columns: updatedColumns,
-            currentPlayer: {
-              ...state.currentPlayer,
-              hand: newHand,
-              reserve: newReserve,
-              discardPile: [...state.currentPlayer.discardPile, state.selectedCards.find((c) => c.value === "7")],
-            },
-            selectedCards: [],
-            hasPlayedAction: true,
-            playedCardsLastTurn: 2,
-            message: t("game.messages.valetPlacedPassive")
-          };
-        } 
-        // Si le Valet est joué avec un JOKER ou un sacrifice
-        else if (state.selectedCards.some((c) => c.type === "joker") || state.selectedSacrificeCards.length > 0) {
-          const updatedColumns = { ...state.columns };
-          const activator = state.selectedCards.some((c) => c.type === "joker") ? 'joker' : 'sacrifice';
-          
-          updatedColumns[suit].faceCards.J = {
-            ...card,
-            activatedBy: activator,
-            canAttackImmediately: true, // Peut attaquer immédiatement
-            canAttackNextTurn: true,
-            hasAttacked: false,
-            state: 'active'
-          };
-
-          // Remove cards from hand/reserve
-          const newHand = state.currentPlayer.hand.filter(
-            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
-          );
-          const newReserve = state.currentPlayer.reserve.filter(
-            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
-          );
-
-          return {
-            ...state,
-            columns: updatedColumns,
-            currentPlayer: {
-              ...state.currentPlayer,
-              hand: newHand,
-              reserve: newReserve,
-              discardPile: [...state.currentPlayer.discardPile, state.selectedCards.find((c) => c.type === "joker")],
-            },
-            selectedCards: [],
-            hasPlayedAction: true,
-            playedCardsLastTurn: 2,
-            message: t("game.messages.valetPlacedActive")
-          };
-        }
-        // Dans tous les autres cas (déjà en jeu et n'a pas encore attaqué)
-        else if (!state.columns[suit].faceCards.J?.state) {
-          const updatedColumns = { ...state.columns };
-          updatedColumns[suit].faceCards.J = {
-            ...card,
-            state: 'active' // Le Valet reste actif tant qu'il n'a pas attaqué
-          };
-
-          // Remove cards from hand/reserve
-          const newHand = state.currentPlayer.hand.filter(
-            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
-          );
-          const newReserve = state.currentPlayer.reserve.filter(
-            (card) => !state.selectedCards.some((selected) => selected.id === card.id)
-          );
-
-          return {
-            ...state,
-            columns: updatedColumns,
-            currentPlayer: {
-              ...state.currentPlayer,
-              hand: newHand,
-              reserve: newReserve,
-            },
-            selectedCards: [],
-            hasPlayedAction: true,
-            playedCardsLastTurn: 1,
-            message: t("game.messages.faceCardPlaced", {
-              value: "Valet",
-            }),
-          };
-        }
-      }
-
       return state;
     });
   },
@@ -1452,55 +1394,57 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   handleAttack: (clickedAttackCard: Card) => {
-    console.log("handleAttack gameStore ", clickedAttackCard);
-
     set((state) => {
-      if (state.phase !== "action" || state.hasPlayedAction) return state;
+      const column = state.columns[clickedAttackCard.suit];
+      const valet = column?.faceCards?.J;
+
+      //Le valet doit être en position d’attaque des qu’il rentre sur le terrain avec un sacrifice ou un Joker, donc possibilité d’attaquer des le tour où il est joué
+      if (clickedAttackCard.value === "J" && (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "joker")) {
+      } else {
+        if (state.phase !== "action" || state.hasPlayedAction) return state;
+      }
 
       // Logique spécifique pour l'attaque du Valet
       if (clickedAttackCard.value === "J") {
-        const column = state.columns[clickedAttackCard.suit] || {
-          cards: [],
-          faceCards: {},
-          attackStatus: {
-            lastAttackCard: null,
-            attackButtons: []
-          }
-        };
-        
+        const column = state.columns[clickedAttackCard.suit];
+
         const valet = column.faceCards?.J;
-        
-        if (!valet || valet.state === 'passive') {
-          return {
-            ...state,
-            message: t("game.messages.valetCannotAttack")
-          };
+
+        const buttonsState = column.attackStatus.attackButtons;
+        const clickedButtonState = buttonsState.find((button) => button.id === clickedAttackCard.value);
+
+        if (!clickedButtonState || !clickedButtonState.active) {
+          return state;
         }
 
-        // Utiliser handleValetAttack pour gérer l'attaque
-        const stateAfterAttack = handleValetAttack(state, clickedAttackCard, column.cards || [], clickedAttackCard.suit);
-        
-        // Mettre le Valet en mode passif après l'attaque
-        const updatedColumns = { ...stateAfterAttack.columns };
-        if (updatedColumns[clickedAttackCard.suit]?.faceCards?.J) {
-          updatedColumns[clickedAttackCard.suit].faceCards.J = {
-            ...updatedColumns[clickedAttackCard.suit].faceCards.J,
-            state: 'passive'
-          };
-        }
+        // Désactiver tous les boutons de la même catégorie??????????? SAA
+        const newButtonsState = buttonsState.map((button) => {
+          if (button.category === clickedButtonState.category) {
+            return { ...button, active: false }; // Désactiver les boutons de la catégorie
+          }
+          return button;
+        });
 
         // Calculer le nombre de cartes détruites
-        const cardsDestroyedCount = stateAfterAttack.currentPlayer.discardPile.length - state.currentPlayer.discardPile.length;
+        // const cardsDestroyedCount =
+        //   stateAfterAttack.currentPlayer.discardPile.length - state.currentPlayer.discardPile.length;
+
+        const updatedColumns = { ...state.columns };
+
+        updatedColumns[clickedAttackCard.suit].attackStatus = {
+          lastAttackCard: { cardValue: clickedAttackCard.value, turn: state.turn },
+          attackButtons: newButtonsState,
+        };
 
         return {
-          ...stateAfterAttack,
+          // ...stateAfterAttack,
           columns: updatedColumns,
           hasPlayedAction: true,
-          playedCardsLastTurn: 0,
-          message: t("game.messages.valetAttack", {
-            count: cardsDestroyedCount,
-            suit: clickedAttackCard.suit
-          })
+          // playedCardsLastTurn: 0,
+          // message: t("game.messages.valetAttack", {
+          //   count: cardsDestroyedCount,
+          //   suit: clickedAttackCard.suit,
+          // }),
         };
       }
 
@@ -1514,7 +1458,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const currentSuit = clickedAttackCard.suit;
 
       // Trouver le bouton cliqué
-      const buttonsState = state.columns[currentSuit]?.attackStatus?.attackButtons || [];
+      const buttonsState = state.columns[currentSuit].attackStatus.attackButtons;
 
       const clickedButtonState = buttonsState.find((button) => button.id === clickedAttackCard.value);
 
@@ -1531,16 +1475,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
 
       const updatedColumns = { ...state.columns };
-      if (!updatedColumns[currentSuit]) {
-        updatedColumns[currentSuit] = {
-          cards: [],
-          faceCards: {},
-          attackStatus: {
-            lastAttackCard: null,
-            attackButtons: []
-          }
-        };
-      }
 
       updatedColumns[currentSuit].attackStatus = {
         lastAttackCard: clickedAttackCard.value,
@@ -1553,6 +1487,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
         playedCardsLastTurn: 0,
         hasPlayedAction: true,
         message: "Attack effectuée",
+      };
+    });
+  },
+  activateCardAttackButton: (card: Card) => {
+    set((state) => {
+      const updatedColumns = { ...state.columns };
+
+      updatedColumns[card.suit].attackStatus.attackButtons = updatedColumns[card.suit].attackStatus.attackButtons.map(
+        (element) => {
+          if (element.id == card.value) return { ...element, active: true };
+          else return element;
+        }
+      );
+
+      return {
+        ...state,
+        columns: updatedColumns,
       };
     });
   },

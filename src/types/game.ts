@@ -22,6 +22,8 @@ export const initialAttackButtons: attackCardButton[] = [
   { id: "7", category: "3", active: false }, //la carte 7 toujours à false
   { id: "8", category: "4", active: true },
   { id: "9", category: "5", active: true },
+  { id: "J", category: "6", active: true },
+  { id: "K", category: "7", active: true },
 ];
 
 export type Card = {
@@ -119,5 +121,6 @@ export interface ColumnState {
   };
   attackStatus: {
     attackButtons: attackCardButton[];
+    lastAttackCard: { cardValue: string; turn: number };
   };
 }

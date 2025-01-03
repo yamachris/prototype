@@ -14,19 +14,17 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
   getEligibleCardsForSacrifice: (suit: Suit, count: number): Card[] => {
     const state = get();
     const column = state.columns[suit];
-    
+
     if (!column || !column.cards.length) return [];
 
     // Trouver l'index du 7 dans la colonne
-    const sevenIndex = column.cards.findIndex(card => card.value === "7");
-    
+    const sevenIndex = column.cards.findIndex((card) => card.value === "7");
+
     // Si un 7 est présent, ne prendre que les cartes au-dessus
-    const cardsToConsider = sevenIndex !== -1 
-      ? column.cards.slice(0, sevenIndex) 
-      : column.cards;
+    const cardsToConsider = sevenIndex !== -1 ? column.cards.slice(0, sevenIndex) : column.cards;
 
     const eligibleCards = cardsToConsider
-      .filter(card => get().canBeSacrificed(card))
+      .filter((card) => get().canBeSacrificed(card))
       .sort((a, b) => {
         const valueOrder = ["2", "3", "4", "5", "6", "8", "9", "J", "Q", "K"];
         return valueOrder.indexOf(b.value) - valueOrder.indexOf(a.value);
@@ -37,25 +35,28 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
 
   setSacrificeMode: (mode: boolean) => {
     const state = get();
-    
+
     // Si on active le mode sacrifice, récupérer toutes les cartes jouées sur le terrain
-    const availableCards = mode ? Object.values(state.columns).flatMap(column => 
-      column.cards.filter(card => 
-        !["A", "7", "10"].includes(card.value) &&
-        (state.selectedCards[0]?.value !== "J" || ["8", "9"].includes(card.value))
-      )
-    ) : [];
+    const availableCards = mode
+      ? Object.values(state.columns).flatMap((column) =>
+          column.cards.filter(
+            (card) =>
+              !["A", "7", "10"].includes(card.value) &&
+              (state.selectedCards[0]?.value !== "J" || ["8", "9"].includes(card.value))
+          )
+        )
+      : [];
 
     set({
       showSacrificePopup: mode,
-      availableCards
+      availableCards,
     });
   },
 
   performSacrifice: (selectedCards: Card[]) => {
     const state = get();
     const specialCard = state.selectedCards[0];
-    
+
     if (!specialCard || selectedCards.length === 0) return;
 
     // Vérifier le nombre de cartes requis
@@ -73,9 +74,9 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
           deck: remainingDeck,
           currentPlayer: {
             ...result.currentPlayer,
-            hand: [...result.currentPlayer.hand, ...drawnCards]
+            hand: [...result.currentPlayer.hand, ...drawnCards],
           },
-          message: `${result.message} Vous avez pioché une carte pour compléter votre main.`
+          message: `${result.message} Vous avez pioché une carte pour compléter votre main.`,
         });
       }
     }
@@ -84,7 +85,7 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
   sacrificeSpecialCard: (selectedCards: Card[]) => {
     const state = get();
     const specialCard = state.selectedCards[0];
-    
+
     if (!specialCard || selectedCards.length === 0) return;
 
     // Vérifier le nombre de cartes requis
@@ -93,14 +94,14 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
 
     // AudioManager.getInstance().playRevolutionSound();  // Retirer le son de révolution
 
-    set(state => {
+    set((state) => {
       // Retirer les cartes sacrifiées des colonnes
       const updatedColumns = { ...state.columns };
-      selectedCards.forEach(card => {
+      selectedCards.forEach((card) => {
         const column = updatedColumns[card.suit];
         if (column) {
           // Garder l'état hasLuckyCard, reserveSuit et activatorType tout en retirant la carte
-          const newCards = column.cards.filter(c => c.id !== card.id);
+          const newCards = column.cards.filter((c) => c.id !== card.id);
           column.cards = newCards;
           // Préserver l'état d'activation de la colonne
           column.hasLuckyCard = column.hasLuckyCard;
@@ -114,7 +115,7 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
         const column = updatedColumns[specialCard.suit];
         column.faceCards = {
           ...column.faceCards,
-          [specialCard.value]: specialCard
+          [specialCard.value]: { ...specialCard, activatedBy: "sacrifice" },
         };
       }
 
@@ -131,8 +132,8 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
       }
 
       // Retirer la carte spéciale de la main ou de la réserve
-      const newHand = state.currentPlayer.hand.filter(c => c.id !== specialCard.id);
-      const newReserve = state.currentPlayer.reserve.filter(c => c.id !== specialCard.id);
+      const newHand = state.currentPlayer.hand.filter((c) => c.id !== specialCard.id);
+      const newReserve = state.currentPlayer.reserve.filter((c) => c.id !== specialCard.id);
 
       // Mettre toutes les cartes sacrifiées dans la défausse
       const cardsToDiscard = [...selectedCards];
@@ -141,9 +142,12 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
       }
 
       // Construire le message final
-      const actionMessage = specialCard.value === "K" ? "Roi placé après sacrifice de 3 unités" :
-                          specialCard.value === "Q" ? "Dame sacrifiée, +2 points de vie" :
-                          "Valet placé après sacrifice";
+      const actionMessage =
+        specialCard.value === "K"
+          ? "Roi placé après sacrifice de 3 unités"
+          : specialCard.value === "Q"
+          ? "Dame sacrifiée, +2 points de vie"
+          : "Valet placé après sacrifice";
       const message = `${actionMessage}. Cliquez sur 'Fin du tour' pour continuer.`;
 
       return {
@@ -153,8 +157,9 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
           hand: newHand,
           reserve: newReserve,
           health: state.currentPlayer.health + healthBonus,
-          maxHealth: specialCard.value === "Q" ? state.currentPlayer.maxHealth + healthBonus : state.currentPlayer.maxHealth,
-          discardPile: [...state.currentPlayer.discardPile, ...cardsToDiscard]
+          maxHealth:
+            specialCard.value === "Q" ? state.currentPlayer.maxHealth + healthBonus : state.currentPlayer.maxHealth,
+          discardPile: [...state.currentPlayer.discardPile, ...cardsToDiscard],
         },
         selectedCards: [],
         showSacrificePopup: false,
@@ -162,8 +167,8 @@ export const createSacrificeActions: StateCreator<GameStore> = (set, get) => ({
         playedCardsLastTurn: 1,
         availableCards: [],
         message,
-        canEndTurn: true
+        canEndTurn: true,
       };
     });
-  }
+  },
 });

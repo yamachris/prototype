@@ -21,6 +21,8 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
   const { t } = useTranslation();
   const { selectedCards, phase, hasPlayedAction, columns } = useGameStore();
 
+  const attackCardValet = column.cards.find((card) => card.value === "J");
+
   // Debug logs
   // console.log("UnitColumn Debug:", {
   //   suit,
@@ -177,13 +179,12 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
             </>
           )}
           {/* Afficher l'épée d'attaque pour les unités normales */}
-          {(attackCard ? true : false) && !isValet && (
-            <CardAttackButton attackCard={attackCard} currentPlayedCard={column.cards[column.cards.length - 1]} />
-          )}
+          {/* {(attackCard ? true : false) && !isValet && ( */}
+          {(attackCard ? true : false) && <CardAttackButton attackCard={attackCard} />}
           {/* Afficher l'épée d'attaque pour le Valet */}
-          {isValet && cardInSlot && (
+          {/* {isValet && cardInSlot && (
             <ValetAttackButton valetCard={cardInSlot} columnSuit={suit} />
-          )}
+          )} */}
         </div>
       </div>
     );
@@ -258,11 +259,12 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
               <Sword className="w-4 h-4 text-gray-500 dark:text-[#404859]" />
               {/* Ajouter l'épée dorée si un Valet est présent */}
               {column.faceCards?.J && (
-                <div className={cn(
-                  'absolute right-[15%] top-[50%] -translate-y-[50%]',
-                  column.faceCards.J.state === 'active' ? 'animate-pulse' : 'text-gray-400'
-                )}>
-                  <ValetAttackButton valetCard={column.faceCards.J} columnSuit={suit} />
+                <div
+                  className={cn(
+                    "absolute right-[15%] top-[50%] -translate-y-[50%]",
+                    column.faceCards.J.state === "active" ? "animate-pulse" : "text-gray-400"
+                  )}>
+                  {column.faceCards?.J && <CardAttackButton attackCard={column.faceCards?.J} />}
                 </div>
               )}
               <span

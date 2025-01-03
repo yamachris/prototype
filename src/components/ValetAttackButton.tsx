@@ -42,38 +42,56 @@ export function ValetAttackButton({ valetCard, columnSuit }: ValetAttackButtonPr
   if (!valet) return null;
 
   // Vérifie si le Valet peut attaquer ce tour-ci
-  const canAttackNow = phase === "action" && !hasPlayedAction && (
+  // const canAttackNow =
+  //   phase === "action" &&
+  //   !hasPlayedAction &&
+  //   // Peut attaquer immédiatement si activé avec JOKER ou sacrifice
+  //   (valet.activatedBy === "joker" ||
+  //     valet.activatedBy === "sacrifice" ||
+  //     // Peut attaquer si activé avec 7 et au tour suivant
+  //     (valet.activatedBy === "seven" && valet.canAttackNextTurn) ||
+  //     // Peut attaquer si c'est son tour après une attaque
+  //     (valet.hasAttacked && valet.canAttackNextTurn));
+
+  const canAttackNow =
     // Peut attaquer immédiatement si activé avec JOKER ou sacrifice
-    (valet.activatedBy === 'joker' || valet.activatedBy === 'sacrifice') ||
+    valet.activatedBy === "joker" ||
+    valet.activatedBy === "sacrifice" ||
     // Peut attaquer si activé avec 7 et au tour suivant
-    (valet.activatedBy === 'seven' && valet.canAttackNextTurn) ||
+    (valet.activatedBy === "seven" && valet.canAttackNextTurn) ||
     // Peut attaquer si c'est son tour après une attaque
-    (valet.hasAttacked && valet.canAttackNextTurn)
-  );
+    (valet.hasAttacked && valet.canAttackNextTurn);
+
+  // console.log("(valet.activatedBy) ", valet.activatedBy);
+
+  // console.log("canAttackNow ", canAttackNow);
+
+  console.log("valetttttt ", columns[columnSuit]);
+  // console.log("valetttttt ", valet);
 
   // L'épée est grisée uniquement si le Valet est joué avec un 7 et doit attendre
-  const isGrayed = valet.activatedBy === 'seven' && !valet.canAttackNextTurn;
+  const isGrayed = valet.activatedBy === "seven" && !valet.canAttackNextTurn;
 
   const iconClass = cn(
     "w-5 h-5 pl-50",
     isGrayed
       ? "text-gray-400" // Grise uniquement si activé avec 7 et doit attendre
       : canAttackNow
-        ? "text-yellow-500 animate-pulse" // Dorée et animée si peut attaquer
-        : "text-yellow-500" // Dorée sinon
+      ? "text-yellow-500 animate-pulse" // Dorée et animée si peut attaquer
+      : "text-yellow-500" // Dorée sinon
   );
 
   const getTitle = () => {
-    if (valet.activatedBy === 'seven' && !valet.canAttackNextTurn) {
-      return t("game.messages.valetWaitNextTurn");
-    }
-    if (valet.hasAttacked && !valet.canAttackNextTurn) {
-      return t("game.messages.valetMustWait");
-    }
-    if (!canAttackNow) {
-      return t("game.messages.valetCannotAttack");
-    }
-    return t("game.messages.valetCanAttack");
+    // if (valet.activatedBy === "seven" && !valet.canAttackNextTurn) {
+    //   return t("game.messages.valetWaitNextTurn");
+    // }
+    // if (valet.hasAttacked && !valet.canAttackNextTurn) {
+    //   return t("game.messages.valetMustWait");
+    // }
+    // if (!canAttackNow) {
+    //   return t("game.messages.valetCannotAttack");
+    // }
+    // return t("game.messages.valetCanAttack");
   };
 
   /**
@@ -86,15 +104,11 @@ export function ValetAttackButton({ valetCard, columnSuit }: ValetAttackButtonPr
         // Le onClick n'est défini que si le bouton est cliquable
         onClick={canAttackNow ? handleAttackClick : undefined}
         // Style du curseur : pointer si cliquable, not-allowed sinon
-        className={cn(
-          "focus:outline-none",
-          canAttackNow ? "cursor-pointer" : "cursor-not-allowed"
-        )}
+        className={cn("focus:outline-none", canAttackNow ? "cursor-pointer" : "cursor-not-allowed")}
         // Désactive le bouton si non cliquable
         disabled={!canAttackNow}
         // Message d'aide différent selon l'état
-        title={getTitle()}
-      >
+        title={getTitle()}>
         <Swords className={iconClass} />
       </button>
     );

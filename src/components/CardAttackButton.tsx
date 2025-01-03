@@ -7,26 +7,45 @@ import { useGameStore } from "../store/gameStore";
 
 interface CardAttackButtonProps {
   attackCard: Card;
-  currentPlayedCard: Card;
 }
 
-export function CardAttackButton({ attackCard, currentPlayedCard }: CardAttackButtonProps) {
+export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
   const { t } = useTranslation();
-  const { currentPlayer, phase, hasPlayedAction, columns, turn, handleAttack } = useGameStore();
+  const { currentPlayer, phase, hasPlayedAction, columns, turn, handleAttack, activateCardAttackButton } =
+    useGameStore();
 
-  const attackStatus = columns[currentPlayedCard.suit].attackStatus;
+  const column = columns[attackCard.suit];
+  const attackStatus = column.attackStatus;
   let attackButtons = attackStatus.attackButtons;
 
-  const isActive = attackButtons.find((button) => button.id === attackCard.value)?.active;
+  const isAttackButtonActive = attackButtons.find((button) => button.id === attackCard.value)?.active;
+  const lastAttackTurn = attackStatus.lastAttackCard?.turn;
 
   const [localState, setLocalState] = useState({ currentTurn: turn, canAttackNow: false });
+  const [hasDoneOnce, setHasDoneOnce] = useState(false);
 
-  console.log(attackButtons);
+  const valet = column?.faceCards?.J;
+
+  // console.log(column);
 
   useEffect(() => {
+    console.log("---------isAttackButtonActive ", isAttackButtonActive);
+
+    if (attackCard.value == "J") {
+      if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "joker") {
+        if (!localState.canAttackNow) {
+          setLocalState({ ...localState, currentTurn: turn, canAttackNow: true });
+          return;
+        } else setHasDoneOnce(true);
+      }
+
+      if (!isAttackButtonActive && lastAttackTurn + 2 == turn) {
+        activateCardAttackButton(attackCard);
+      }
+    }
+
     if (localState.currentTurn != turn) {
-      console.log("set currentTurn ");
-      setLocalState({ currentTurn: turn, canAttackNow: true });
+      setLocalState({ ...localState, currentTurn: turn, canAttackNow: true });
     }
   }, [turn]);
 
@@ -34,15 +53,22 @@ export function CardAttackButton({ attackCard, currentPlayedCard }: CardAttackBu
     e.stopPropagation();
     console.log("handleAttackClick ", attackButtons);
 
-    handleAttack(attackCard, attackButtons);
+    handleAttack(attackCard);
   };
 
-  const isEnabled = phase == "action" && !hasPlayedAction;
+  var isEnabled = phase == "action" && !hasPlayedAction;
+
+  if (!hasDoneOnce && attackCard.value == "J") {
+    if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "joker") {
+      isEnabled = true;
+    }
+  }
 
   const iconClass = cn(
-    "w-5 h-5 pl-50 absolute right-[25%]", 
+    "w-5 h-5 pl-50 absolute right-[25%]",
     isEnabled ? "text-red-700 animate-pulse transition-opacity duration-1000" : "text-gray-700"
   );
 
-  if (isActive && localState.canAttackNow) return <Swords onClick={handleAttackClick} className={iconClass} />;
+  if (isAttackButtonActive && localState.canAttackNow)
+    return <Swords onClick={handleAttackClick} className={iconClass} />;
 }
