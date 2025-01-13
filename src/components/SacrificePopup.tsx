@@ -1,51 +1,51 @@
-import React from 'react';
-import { useGameStore } from '../store/gameStore';
-import './SacrificePopup.css';
-import { Card } from '../types/game';
+import React from "react";
+import { useGameStore } from "../store/gameStore";
+import "./SacrificePopup.css";
+import { Card } from "../types/game";
 
 export const SacrificePopup: React.FC = () => {
-  const { 
-    showSacrificePopup, 
-    availableCards, 
-    sacrificeSpecialCard, 
-    setSacrificeMode, 
+  const {
+    showSacrificePopup,
+    availableCards,
+    sacrificeSpecialCard,
+    setSacrificeMode,
     selectedCards: selectedSpecialCards,
     setSelectedSacrificeCards,
-    selectedSacrificeCards 
+    selectedSacrificeCards,
   } = useGameStore();
 
   if (!showSacrificePopup || selectedSpecialCards.length === 0) return null;
 
   const specialCard = selectedSpecialCards[0];
-  const requiredCards = specialCard.value === 'K' ? 3 : specialCard.value === 'Q' ? 2 : 1;
+  const requiredCards = specialCard.value === "K" ? 3 : specialCard.value === "Q" ? 2 : 1;
 
   const getHighestValueInSuit = (cards: Card[]): number => {
-    return Math.max(...cards.map(card => parseInt(card.value) || 0));
+    return Math.max(...cards.map((card) => parseInt(card.value) || 0));
   };
 
   const isCardSelectable = (card: Card, suitCards: Card[]): boolean => {
     // Pour le Valet, uniquement 8 ou 9, en commençant par la plus haute
-    if (specialCard.value === 'J') {
+    if (specialCard.value === "J") {
       const cardValue = parseInt(card.value) || 0;
-      if (!['8', '9'].includes(card.value)) {
+      if (!["8", "9"].includes(card.value)) {
         return false;
       }
-      
+
       // Vérifier s'il y a une carte plus haute disponible
-      const higherCard = suitCards.find(c => {
+      const higherCard = suitCards.find((c) => {
         const value = parseInt(c.value) || 0;
         return c.suit === card.suit && value > cardValue && !selectedSacrificeCards.includes(c);
       });
-      
+
       return !higherCard; // Sélectionnable seulement s'il n'y a pas de carte plus haute
     }
 
     const { columns } = useGameStore.getState();
     const columnCards = columns[card.suit].cards;
-    
+
     // Vérifier la présence d'un 7 dans la colonne
-    const hasSeven = columnCards.some(c => c.value === '7');
-    
+    const hasSeven = columnCards.some((c) => c.value === "7");
+
     if (hasSeven) {
       const cardValue = parseInt(card.value) || 0;
       // Si un 7 est présent dans la colonne, seules les cartes 8 et 9 sont sélectionnables
@@ -54,7 +54,7 @@ export const SacrificePopup: React.FC = () => {
 
     // Pour une même suite, on doit sacrifier dans l'ordre décroissant
     const cardValue = parseInt(card.value) || 0;
-    const higherCards = suitCards.filter(c => {
+    const higherCards = suitCards.filter((c) => {
       const value = parseInt(c.value) || 0;
       return c.suit === card.suit && value > cardValue && !selectedSacrificeCards.includes(c);
     });
@@ -64,8 +64,8 @@ export const SacrificePopup: React.FC = () => {
 
   const isValidSelection = (cards: Card[]): boolean => {
     if (cards.length === 0) return true;
-    if (specialCard.value === 'J') {
-      return cards.every(card => ['8', '9'].includes(card.value));
+    if (specialCard.value === "J") {
+      return cards.every((card) => ["8", "9"].includes(card.value));
     }
     return true;
   };
@@ -104,16 +104,16 @@ export const SacrificePopup: React.FC = () => {
 
   const getCardName = (card: Card): string => {
     const suitNames: Record<string, string> = {
-      hearts: '♥️ Cœur',
-      diamonds: '♦️ Carreau',
-      clubs: '♣️ Trèfle',
-      spades: '♠️ Pique'
+      hearts: "♥️ Cœur",
+      diamonds: "♦️ Carreau",
+      clubs: "♣️ Trèfle",
+      spades: "♠️ Pique",
     };
 
     const valueNames: Record<string, string> = {
-      'J': 'Valet',
-      'Q': 'Dame',
-      'K': 'Roi'
+      J: "Valet",
+      Q: "Dame",
+      K: "Roi",
     };
 
     const cardName = valueNames[card.value] || card.value;
@@ -122,20 +122,29 @@ export const SacrificePopup: React.FC = () => {
 
   const getTitle = () => {
     switch (specialCard.value) {
-      case 'K': return '👑 Sacrifice pour Roi';
-      case 'Q': return '👸 Sacrifice pour Dame';
-      case 'J': return '🤴 Sacrifice pour Valet';
-      default: return '';
+      case "K":
+        return "👑 Sacrifice pour Roi";
+      case "Q":
+        return "👸 Sacrifice pour Dame";
+      case "J":
+        return "🤴 Sacrifice pour Valet";
+      default:
+        return "";
     }
   };
 
   const getSuitSymbol = (suit: string) => {
     switch (suit.toLowerCase()) {
-      case 'hearts': return '♥';
-      case 'diamonds': return '♦';
-      case 'clubs': return '♣';
-      case 'spades': return '♠';
-      default: return '';
+      case "hearts":
+        return "♥";
+      case "diamonds":
+        return "♦";
+      case "clubs":
+        return "♣";
+      case "spades":
+        return "♠";
+      default:
+        return "";
     }
   };
 
@@ -144,11 +153,12 @@ export const SacrificePopup: React.FC = () => {
       hearts: [] as Card[],
       diamonds: [] as Card[],
       clubs: [] as Card[],
-      spades: [] as Card[]
+      spades: [] as Card[],
     };
 
-    availableCards.forEach(card => {
-      grouped[card.suit.toLowerCase() as keyof typeof grouped].push(card);
+    availableCards.forEach((card) => {
+      if (grouped[card.suit.toLowerCase() as keyof typeof grouped])
+        grouped[card.suit.toLowerCase() as keyof typeof grouped].push(card);
     });
 
     return grouped;
@@ -161,14 +171,17 @@ export const SacrificePopup: React.FC = () => {
       <div className="sacrifice-popup">
         <div className="popup-header">
           <h2>Sacrifice pour le {getCardName(specialCard)}</h2>
-          <button className="close-button" onClick={handleClose}>×</button>
+          <button className="close-button" onClick={handleClose}>
+            ×
+          </button>
         </div>
-        
+
         <p className="selection-info">
-          Sélectionnez {requiredCards} cartes à sacrifier ({selectedSacrificeCards.length} sélectionnée{selectedSacrificeCards.length > 1 ? 's' : ''})
+          Sélectionnez {requiredCards} cartes à sacrifier ({selectedSacrificeCards.length} sélectionnée
+          {selectedSacrificeCards.length > 1 ? "s" : ""})
         </p>
         <p className="selection-help">
-          {specialCard.value === 'J' 
+          {specialCard.value === "J"
             ? "Sélectionnez uniquement des 8 ou 9"
             : "Sélectionnez les cartes que vous avez jouées sur le terrain (dans l'ordre décroissant pour une même suite)"}
         </p>
@@ -176,21 +189,18 @@ export const SacrificePopup: React.FC = () => {
         <div className="suits-container">
           {Object.entries(groupedCards).map(([suit, cards]) => (
             <div key={suit} className="suit-column">
-              <div className={`suit-header ${suit}`}>
-                {getSuitSymbol(suit)}
-              </div>
+              <div className={`suit-header ${suit}`}>{getSuitSymbol(suit)}</div>
               <div className="suit-cards">
-                {cards.map(card => {
+                {cards.map((card) => {
                   const isSelectable = isCardSelectable(card, cards);
 
                   return (
                     <div
                       key={card.id}
-                      className={`card-slot ${selectedSacrificeCards.includes(card) ? 'selected' : ''} ${
-                        !isSelectable ? 'invalid' : ''
+                      className={`card-slot ${selectedSacrificeCards.includes(card) ? "selected" : ""} ${
+                        !isSelectable ? "invalid" : ""
                       }`}
-                      onClick={() => handleCardSelect(card, cards)}
-                    >
+                      onClick={() => handleCardSelect(card, cards)}>
                       {card.value}
                     </div>
                   );
@@ -207,8 +217,7 @@ export const SacrificePopup: React.FC = () => {
           <button
             className="confirm-button"
             onClick={handleConfirm}
-            disabled={selectedSacrificeCards.length !== requiredCards}
-          >
+            disabled={selectedSacrificeCards.length !== requiredCards}>
             Confirmer
           </button>
         </div>

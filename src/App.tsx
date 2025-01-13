@@ -1,20 +1,21 @@
-import React, { useEffect } from 'react';
-import { useGameStore } from './store/GameStore';
-import { Header } from './components/Header';
-import { GameBoard } from './components/GameBoard';
-import { GameControls } from './components/GameControls';
-import { SetupPhase } from './components/SetupPhase';
-import { PlayerArea } from './components/PlayerArea';
-import { DeckArea } from './components/DeckArea';
-import { GameOver } from './components/GameOver';
-import { TimeoutWarning } from './components/TimeoutWarning';
-import { ThemeToggle } from './components/ThemeToggle';
-import { LanguageSelector } from './components/LanguageSelector';
-import { useTranslation } from 'react-i18next';
-import { I18nextProvider } from 'react-i18next';
-import i18n from './i18n/config';
-import { AudioManager } from './sound-design/audioManager';
-import { SacrificePopup } from './components/SacrificePopup';
+import React, { useEffect } from "react";
+import { useGameStore } from "./store/GameStore";
+import { Header } from "./components/Header";
+import { GameBoard } from "./components/GameBoard";
+import { GameControls } from "./components/GameControls";
+import { SetupPhase } from "./components/SetupPhase";
+import { PlayerArea } from "./components/PlayerArea";
+import { DeckArea } from "./components/DeckArea";
+import { GameOver } from "./components/GameOver";
+import { TimeoutWarning } from "./components/TimeoutWarning";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { LanguageSelector } from "./components/LanguageSelector";
+import { useTranslation } from "react-i18next";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./i18n/config";
+import { AudioManager } from "./sound-design/audioManager";
+import { SacrificePopup } from "./components/SacrificePopup";
+import { JokerExchangePopup } from "./components/JokerExchangePopup";
 
 export default function App() {
   const { phase, initializeGame, isGameOver } = useGameStore();
@@ -44,8 +45,8 @@ export default function App() {
         </div>
 
         {isGameOver && <GameOver reason="surrender" onRestart={initializeGame} />}
-        {phase === 'setup' && <SetupPhase />}
-        {!isGameOver && phase !== 'setup' && (
+        {phase === "setup" && <SetupPhase />}
+        {!isGameOver && phase !== "setup" && (
           <>
             <div className="pb-[calc(144px+80px)] container mx-auto px-4 py-4">
               <Header />
@@ -67,6 +68,7 @@ export default function App() {
             <TimeoutWarning />
           </>
         )}
+        <JokerExchangePopup />
         <SacrificePopup />
       </div>
     </I18nextProvider>

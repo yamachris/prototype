@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart, Diamond, Club, Spade, Sword, Crown, Columns } from "lucide-react";
+import { Heart, Diamond, Club, Spade, Sword, Crown, Columns, Joystick } from "lucide-react";
 import { Suit, ColumnState } from "../types/game";
 import { cn } from "../utils/cn";
 import { useTranslation } from "react-i18next";
@@ -123,7 +123,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
               {(column.reserveSuit?.type === "joker" || column.reserveSuit?.value === "7") && column.cards[5] ? (
                 <PlaceSevenButton />
               ) : !column.reserveSuit.value || column.reserveSuit.value !== "7" || !column.cards[5] ? (
-                <CardExchangeButton activatorCard={column.reserveSuit} />
+                <CardExchangeButton activatorCard={column.reserveSuit} currentSuit={suit} />
               ) : (
                 <></>
               )}
@@ -134,10 +134,18 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
     );
   };
 
-  const renderCardInSlot = (value: string) => {
+  const renderCardInSlot = (value: string, index: number) => {
     // Normaliser la valeur pour la recherche
     const searchValue = value === "A" ? "As" : value;
-    const cardInSlot = column.cards.find((card) => card.value === searchValue);
+    var cardInSlot = column.cards.find((card) => card.value === searchValue);
+
+    const currentIndex = 10 - index - 1;
+
+    if (column.cards.length > currentIndex)
+      var isJokerInSlot = column.cards[currentIndex].value === "JOKER" ? column.cards[currentIndex] : undefined;
+
+    if (!cardInSlot && isJokerInSlot) cardInSlot = isJokerInSlot;
+
     const isAs = value === "A";
 
     const attackCard = column.cards.find((card) => card.value === value);
@@ -181,6 +189,8 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
           {/* Afficher l'épée d'attaque pour les unités normales */}
           {/* {(attackCard ? true : false) && !isValet && ( */}
           {(attackCard ? true : false) && <CardAttackButton attackCard={attackCard} />}
+          {isJokerInSlot && <Joystick className={cn("w-5 h-5 pl-50 absolute right-[25%]", "text-red-700  ")} />}
+
           {/* Afficher l'épée d'attaque pour le Valet */}
           {/* {isValet && cardInSlot && (
             <ValetAttackButton valetCard={cardInSlot} columnSuit={suit} />
@@ -242,7 +252,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
 
       {/* Zone des emplacements de cartes */}
       <div className="px-4 py-2 space-y-[6px]">
-        {["10", "9", "8", "7", "6", "5", "4", "3", "2", "A"].map(renderCardInSlot)}
+        {["10", "9", "8", "7", "6", "5", "4", "3", "2", "A"].map((value, index) => renderCardInSlot(value, index))}
       </div>
 
       {/* Zone Valet/Roi avec ligne de séparation */}

@@ -1,12 +1,14 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { useGameStore } from '../store/gameStore';
-import { Card } from './Card';
-import { Shield, ArrowLeftRight, RefreshCw } from 'lucide-react';
-import { cn } from '../utils/cn';
-import type { Card as CardType, Phase } from '../types/game';
-import { JokerActions } from './JokerActions';
-import { useTranslation } from 'react-i18next';
-import { QueenChallenge } from './QueenChallenge';
+import React, { useState, useRef, useMemo } from "react";
+import { useGameStore } from "../store/gameStore";
+import { Card } from "./Card";
+import { Shield, ArrowLeftRight, RefreshCw } from "lucide-react";
+import { cn } from "../utils/cn";
+import type { Card as CardType, Phase } from "../types/game";
+import { JokerActions } from "./JokerActions";
+import { useTranslation } from "react-i18next";
+import { QueenChallenge } from "./QueenChallenge";
+
+import { JokerExchangeButton } from "./JokerExchangeButton";
 
 interface GameState {
   currentPlayer: {
@@ -33,7 +35,7 @@ interface GameStore extends GameState {
   handleDiscard: (card: CardType) => void;
   handleDrawCard: () => void;
   exchangeCards: (card1: CardType, card2: CardType) => void;
-  handleJokerAction: (joker: CardType, action: 'heal' | 'attack') => void;
+  handleJokerAction: (joker: CardType, action: "heal" | "attack") => void;
   setAttackMode: (mode: boolean) => void;
   setMessage: (message: string) => void;
   handleStrategicShuffle: () => void;
@@ -49,9 +51,10 @@ interface GameStore extends GameState {
 }
 
 export function PlayerArea() {
-  const { 
-    currentPlayer, 
+  const {
+    currentPlayer,
     phase,
+    columns,
     isPlayerTurn,
     selectedCards,
     selectCard,
@@ -65,28 +68,34 @@ export function PlayerArea() {
     handleQueenChallenge,
     setMessage,
     handleStrategicShuffle: storeHandleStrategicShuffle,
-    endTurn
+    endTurn,
   } = useGameStore();
 
   const [showPopup, setShowPopup] = useState(false);
-  const [popupMessage, setPopupMessage] = useState('');
+  const [popupMessage, setPopupMessage] = useState("");
   const popupTimer = useRef<NodeJS.Timeout>();
 
-  const canUseStrategicShuffle = useGameStore(state => state.canUseStrategicShuffle());
-  const message = useGameStore(state => state.message);
-  const awaitingConfirmation = useGameStore(state => state.awaitingStrategicShuffleConfirmation);
-  const confirmStrategicShuffle = useGameStore(state => state.confirmStrategicShuffle);
+  const canUseStrategicShuffle = useGameStore((state) => state.canUseStrategicShuffle());
+  const message = useGameStore((state) => state.message);
+  const awaitingConfirmation = useGameStore((state) => state.awaitingStrategicShuffleConfirmation);
+  const confirmStrategicShuffle = useGameStore((state) => state.confirmStrategicShuffle);
+
+  // const isJokerUsedCard = columns.map((column) => {});
+
+  // [suit].cards.find((card) => card.type === "joker");
+
+  // {isJokerUsedCard && <JokerExchangeButton jokerUsedCard={isJokerUsedCard} currentSuit={suit} />}
 
   const handleStrategicShuffle = () => {
     if (!canUseStrategicShuffle) return;
-    
+
     storeHandleStrategicShuffle();
     setShowPopup(true);
-    
+
     if (popupTimer.current) {
       clearTimeout(popupTimer.current);
     }
-    
+
     popupTimer.current = setTimeout(() => {
       setShowPopup(false);
     }, 3000);
@@ -95,15 +104,16 @@ export function PlayerArea() {
   const [exchangeMode, setExchangeMode] = useState(false);
   const [selectedForExchange, setSelectedForExchange] = useState<{
     card: CardType;
-    from: 'hand' | 'reserve';
+    from: "hand" | "reserve";
   } | null>(null);
 
   const totalCards = currentPlayer.hand.length + currentPlayer.reserve.length;
-  const canDiscard = phase === 'discard' && !hasDiscarded;
-  const canDraw = phase === 'draw' && totalCards < 7;
+  const canDiscard = phase === "discard" && !hasDiscarded;
+  const canDraw = phase === "draw" && totalCards < 7;
 
-  const handleCardClick = (card: CardType, from: 'hand' | 'reserve') => {
-    if (card.type === 'joker' && isPlayerTurn && phase === 'action') {      selectCard(card);
+  const handleCardClick = (card: CardType, from: "hand" | "reserve") => {
+    if (card.type === "joker" && isPlayerTurn && phase === "action") {
+      selectCard(card);
       return;
     }
 
@@ -111,8 +121,8 @@ export function PlayerArea() {
       if (selectedForExchange) {
         if (selectedForExchange.from !== from) {
           exchangeCards(
-            selectedForExchange.from === 'hand' ? selectedForExchange.card : card,
-            selectedForExchange.from === 'reserve' ? selectedForExchange.card : card
+            selectedForExchange.from === "hand" ? selectedForExchange.card : card,
+            selectedForExchange.from === "reserve" ? selectedForExchange.card : card
           );
         }
         setExchangeMode(false);
@@ -123,12 +133,12 @@ export function PlayerArea() {
       return;
     }
 
-    if (phase === 'discard' && canDiscard) {
+    if (phase === "discard" && canDiscard) {
       handleDiscard(card);
       return;
     }
 
-    const isSelected = selectedCards.some(c => c.id === card.id);
+    const isSelected = selectedCards.some((c) => c.id === card.id);
     if (isSelected) {
       selectCard(card);
     } else if (selectedCards.length < 2) {
@@ -136,9 +146,9 @@ export function PlayerArea() {
     }
   };
 
-  const handleJokerActionClick = (action: 'heal' | 'attack') => {
+  const handleJokerActionClick = (action: "heal" | "attack") => {
     const selectedJoker = selectedCards[0];
-    if (selectedJoker?.type === 'joker') {
+    if (selectedJoker?.type === "joker") {
       handleJokerAction(selectedJoker, action);
     }
   };
@@ -156,13 +166,14 @@ export function PlayerArea() {
           <div className="flex-1 space-y-2">
             <div className="flex items-center justify-between px-2 relative">
               <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                {t('game.cards.hand')} ({currentPlayer.hand.length}/5)
+                {t("game.cards.hand")} ({currentPlayer.hand.length}/5)
               </span>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('game.cards.total')} {totalCards}/7 {t('game.cards.hand')}
+                    {t("game.cards.total")} {totalCards}/7 {t("game.cards.hand")}
                   </span>
+                  {/* <div className="flex flex-col  justify-between"> */}
                   <button
                     onClick={() => {
                       setExchangeMode(!exchangeMode);
@@ -174,10 +185,9 @@ export function PlayerArea() {
                         ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                         : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
                       "hover:bg-blue-200 dark:hover:bg-blue-800"
-                    )}
-                  >
+                    )}>
                     <ArrowLeftRight className="w-4 h-4" />
-                    <span>{t('game.actions.exchange')}</span>
+                    <span>{t("game.actions.exchange")}</span>
                   </button>
                   <button
                     onClick={handleStrategicShuffle}
@@ -188,28 +198,34 @@ export function PlayerArea() {
                         ? "bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-800/70 text-purple-600 dark:text-purple-400"
                         : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50",
                       "ring-1 ring-purple-400/50 hover:ring-purple-500"
-                    )}
-                  >
+                    )}>
                     <RefreshCw className="w-4 h-4" />
-                    <span>{t('game.ui.strategicShuffle')}</span>
+                    <span>{t("game.ui.strategicShuffle")}</span>
                   </button>
-                  {selectedCards.length > 0 && selectedCards[0]?.value && (selectedCards[0].value === "K" || selectedCards[0].value === "Q" || selectedCards[0].value === "J") && (
-                    <button
-                      onClick={() => useGameStore.getState().setSacrificeMode(true)}
-                      disabled={hasPlayedAction || phase !== "action"}
-                      className={cn(
-                        "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors",
-                        !hasPlayedAction && phase === "action"
-                          ? "bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/70 text-red-600 dark:text-red-400"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50",
-                        "ring-1 ring-red-400/50 hover:ring-red-500"
-                      )}
-                      title={t("game.actions.sacrifice.tooltip")}
-                    >
-                      <span>☠️</span>
-                      <span>{t("game.actions.sacrifice.button")}</span>
-                    </button>
-                  )}
+
+                  <JokerExchangeButton />
+                  {/* </div> */}
+
+                  {selectedCards.length > 0 &&
+                    selectedCards[0]?.value &&
+                    (selectedCards[0].value === "K" ||
+                      selectedCards[0].value === "Q" ||
+                      selectedCards[0].value === "J") && (
+                      <button
+                        onClick={() => useGameStore.getState().setSacrificeMode(true)}
+                        disabled={hasPlayedAction || phase !== "action"}
+                        className={cn(
+                          "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors",
+                          !hasPlayedAction && phase === "action"
+                            ? "bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/70 text-red-600 dark:text-red-400"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50",
+                          "ring-1 ring-red-400/50 hover:ring-red-500"
+                        )}
+                        title={t("game.actions.sacrifice.tooltip")}>
+                        <span>☠️</span>
+                        <span>{t("game.actions.sacrifice.button")}</span>
+                      </button>
+                    )}
                 </div>
               </div>
             </div>
@@ -219,17 +235,17 @@ export function PlayerArea() {
                 <div key={card.id} className="relative group">
                   <Card
                     card={card}
-                    isSelected={selectedCards.some(c => c.id === card.id)}
+                    isSelected={selectedCards.some((c) => c.id === card.id)}
                     onClick={() => {
                       if (exchangeMode) {
                         if (!selectedForExchange) {
-                          setSelectedForExchange({ card, from: 'hand' });
-                        } else if (selectedForExchange.from === 'reserve') {
+                          setSelectedForExchange({ card, from: "hand" });
+                        } else if (selectedForExchange.from === "reserve") {
                           exchangeCards(card, selectedForExchange.card);
                           setSelectedForExchange(null);
                           setExchangeMode(false);
                         }
-                      } else if (phase === 'discard') {
+                      } else if (phase === "discard") {
                         handleDiscard(card);
                       } else {
                         selectCard(card);
@@ -237,7 +253,7 @@ export function PlayerArea() {
                     }}
                     onJokerAction={(action) => handleJokerAction(card, action)}
                     onQueenActivate={() => {
-                      const activator = selectedCards.find(c => c.type === 'joker' || c.value === '7');
+                      const activator = selectedCards.find((c) => c.type === "joker" || c.value === "7");
                       if (activator) {
                         handleCardPlace(card.suit, 0);
                       }
@@ -259,7 +275,7 @@ export function PlayerArea() {
             <div className="flex items-center gap-2 px-2">
               <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                {t('game.cards.reserve')} ({currentPlayer.reserve.length}/2)
+                {t("game.cards.reserve")} ({currentPlayer.reserve.length}/2)
               </span>
             </div>
 
@@ -268,17 +284,17 @@ export function PlayerArea() {
                 <div key={card.id} className="relative group">
                   <Card
                     card={card}
-                    isSelected={selectedCards.some(c => c.id === card.id)}
+                    isSelected={selectedCards.some((c) => c.id === card.id)}
                     onClick={() => {
                       if (exchangeMode) {
                         if (!selectedForExchange) {
-                          setSelectedForExchange({ card, from: 'reserve' });
-                        } else if (selectedForExchange.from === 'hand') {
+                          setSelectedForExchange({ card, from: "reserve" });
+                        } else if (selectedForExchange.from === "hand") {
                           exchangeCards(selectedForExchange.card, card);
                           setSelectedForExchange(null);
                           setExchangeMode(false);
                         }
-                      } else if (phase === 'discard') {
+                      } else if (phase === "discard") {
                         handleDiscard(card);
                       } else {
                         selectCard(card);
@@ -286,7 +302,7 @@ export function PlayerArea() {
                     }}
                     onJokerAction={(action) => handleJokerAction(card, action)}
                     onQueenActivate={() => {
-                      const activator = selectedCards.find(c => c.type === 'joker' || c.value === '7');
+                      const activator = selectedCards.find((c) => c.type === "joker" || c.value === "7");
                       if (activator) {
                         handleCardPlace(card.suit, 0);
                       }

@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { Crown } from 'lucide-react';
-import { useGameStore } from '../store/gameStore';
-import { cn } from '../utils/cn';
-import { AudioManager } from '../sound-design/audioManager';
+import React, { useEffect } from "react";
+import { Crown } from "lucide-react";
+import { useGameStore } from "../store/gameStore";
+import { cn } from "../utils/cn";
+import { AudioManager } from "../sound-design/audioManager";
 
 export function RevolutionPopup() {
   const { showRevolutionPopup } = useGameStore();
@@ -26,17 +26,16 @@ export function RevolutionPopup() {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      <div className={cn(
-        "bg-gradient-to-r from-yellow-500 to-yellow-600",
-        "px-8 py-6 rounded-xl shadow-2xl",
-        "transform transition-all duration-500",
-        "animate-popup",
-        "flex items-center gap-4"
-      )}>
+      <div
+        className={cn(
+          "bg-gradient-to-r from-yellow-500 to-yellow-600",
+          "px-8 py-6 rounded-xl shadow-2xl",
+          "transform transition-all duration-500",
+          "animate-popup",
+          "flex items-center gap-4"
+        )}>
         <Crown className="w-8 h-8 text-white animate-bounce" />
-        <span className="text-2xl font-bold text-white">
-          RÉVOLUTION !
-        </span>
+        <span className="text-2xl font-bold text-white">RÉVOLUTION !</span>
       </div>
     </div>
   );

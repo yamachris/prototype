@@ -13,6 +13,8 @@ import { createRevolutionActions } from "./slices/revolutionActions";
 import { createSacrificeActions } from "./slices/sacrificeActions";
 import { createKingDefenseActions } from "./slices/kingDefense"; // Importer les actions du Roi
 import { handleValetAttack } from "./slices/valetActions"; // Importer handleValetAttack
+import { Columns } from "lucide-react";
+import { attackCardButton } from "../types/game";
 
 // Au début du fichier, après les autres imports
 const t = (key: string) => i18next.t(key);
@@ -51,7 +53,9 @@ interface GameState {
   canBlock: boolean;
   blockedColumns: number[]; // Indices des colonnes qui ont été bloquées
   showSacrificePopup: boolean;
+  showJokerExchangePopup: boolean;
   sacrificeInfo: null;
+  availableCards: Card[];
 }
 
 // Ajout du type pour le store complet
@@ -88,6 +92,11 @@ export interface GameStore extends GameState {
   handleRevolution: () => void;
   handleSacrifice: (suit: Suit, specialCard: Card) => void;
   setSelectedSacrificeCards: (cards: Card[]) => void;
+  handleActivatorExchange: (columnCard: Card, playerCard: Card) => void;
+  handleJokerExchange: (selectedCard: Card) => void;
+  displayJokerExchangePopup: (availableCards: Card[]) => void;
+  closeJokerExchangePopup: () => void;
+  setSelectedJokerExchangeCards: (cards: Card[]) => void;
 }
 
 // Création du store avec Zustand
@@ -181,6 +190,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   canBlock: false,
   blockedColumns: [],
   showSacrificePopup: false,
+  showJokerExchangePopup: false,
   sacrificeInfo: null,
   ...createColumnActions(set),
   ...createRevolutionActions(set, get),
@@ -779,7 +789,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return (
       jokerCard.type === "joker" &&
       state.phase === "action" &&
-      !state.hasPlayedAction && // Vérifie qu'aucune action n'a été jouée ce tour
+      !state.hasPlayedAction && // Vérifie qu'aucune action n'a été jouée ce tour-ci
       (state.currentPlayer.hand.some((c) => c.id === jokerCard.id) ||
         state.currentPlayer.reserve.some((c) => c.id === jokerCard.id))
     );
@@ -977,28 +987,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const column = state.columns[suit];
       const reserveSuitCard = column.reserveSuit;
 
-      // Check if the column's reserve suit is locked and trying to place a 7 or Joker
-      if (
-        column.isReserveSuitLocked &&
-        state.selectedCards.some(
-          (card) =>
-            (card.type === "joker" || card.value === "7") &&
-            // Ne pas bloquer les têtes de jeu (roi et valet)
-            !state.selectedCards.some((c) => c.value === "J" || c.value === "K")
-        )
-      ) {
-        return state;
-      }
-
-      // Vérifier si une attaque a été effectuée ce tour
-      if (state.hasPlayedAction) {
-        return {
-          ...state,
-          selectedCards: [],
-          message: t("game.messages.cannotPlayAfterAction"),
-        };
-      }
-
       // Handle placing a 7 from reserve suit to column
       if (reserveSuitCard?.value === "7" && reserveSuitCard.suit === suit && position === 6) {
         // Jouer le son de carte
@@ -1052,16 +1040,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
         return {
           ...state,
-          hasPlayedAction: true,
           columns: updatedColumns,
           currentPlayer: {
             ...state.currentPlayer,
             hand: newHand,
             reserve: newReserve,
           },
+          hasPlayedAction: true,
           playedCardsLastTurn: 0,
           selectedCards: [],
           nextPhase: newHand.length + newReserve.length === 7 ? "discard" : state.phase,
+        };
+      }
+
+      // Si c'est un Joker et que la colonne est pleine (10 cartes), on bloque simplement le placement
+      if (state.selectedCards[0]?.type === "joker" && column.cards.length >= 10) {
+        return {
+          ...state,
+          message: "Cette colonne est pleine",
+          selectedCards: [],
         };
       }
 
@@ -1137,7 +1134,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             );
 
             // Déterminer le type d'activateur
-            const activatorDisplay = activator.type === "joker" ? "JOKER" : `7${activator.suit}`; // Combine le 7 avec sa famille
+            const activatorDisplay = activator?.type === "joker" ? "JOKER" : `7${activator.suit}`; // Combine le 7 avec sa famille
 
             return {
               ...state,
@@ -1173,7 +1170,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const card = state.selectedCards[0];
 
         // Vérifier si c'est un 7 ou un Joker pour la reserveSuit
-        const isActivator = card.type === "joker" || card.value === "7";
+        // const isActivator = card.type === "joker" || card.value === "7";
+        const isActivator = card.value === "7";
 
         if (isActivator) {
           // Vérifier si la reserveSuit est déjà occupée
@@ -1212,21 +1210,97 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
 
         // Pour les cartes numériques (As à 10)
-        if (card.suit !== suit || !column.hasLuckyCard) {
-          return state;
+        if (card.type != "joker") {
+          if (card.suit !== suit || !column.hasLuckyCard) {
+            return state;
+          }
+
+          // Vérifier si c'est une carte numérique (As à 10)
+          const numericValues = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+          if (!numericValues.includes(card.value)) {
+            return state;
+          }
+
+          // Vérifier l'ordre chronologique
+          const currentValue = card.value;
+          const expectedValue = numericValues[column.cards.length];
+          if (currentValue !== expectedValue) {
+            return state;
+          }
+
+          var newButtonsState = state.columns[suit].attackStatus.attackButtons;
+
+          // Si on remplace un Joker, réactiver les attaques pour cette catégorie
+          const cardToReplace = column.cards[column.cards.length];
+          if (cardToReplace && cardToReplace.type === "joker") {
+            const currentCategory = initialAttackButtons[column.cards.length].category;
+            newButtonsState = state.columns[suit].attackStatus.attackButtons.map((button) => {
+              if (button.category === currentCategory && !button.hasAttacked) {
+                return { ...button, active: true }; // Réactiver les boutons si pas encore attaqué
+              }
+              return button;
+            });
+          }
+
+          // Jouer le son de carte
+          AudioManager.getInstance().playCardSound();
+          // Placement normal dans la séquence
+          const newHand = state.currentPlayer.hand.filter((c) => c.id !== card.id);
+          const newReserve = state.currentPlayer.reserve.filter((c) => c.id !== card.id);
+
+          return {
+            ...state,
+            columns: {
+              ...state.columns,
+              [suit]: {
+                ...column,
+                cards: [...column.cards, card],
+                attackStatus: { attackButtons: newButtonsState },
+              },
+            },
+            currentPlayer: {
+              ...state.currentPlayer,
+              hand: newHand,
+              reserve: newReserve,
+            },
+            selectedCards: [],
+            hasPlayedAction: true,
+            playedCardsLastTurn: 1,
+            message: t("game.messages.cardPlaced"),
+          };
         }
 
-        // Vérifier si c'est une carte numérique (As à 10)
-        const numericValues = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
-        if (!numericValues.includes(card.value)) {
-          return state;
-        }
+        // si joker
+        if (card.type == "joker") {
+          //le joker ne peut remplacer A, 7 et 10
+          if (position == 0 || position == 6 || position == 9) {
+            return {
+              ...state,
+              message: "Le Joker ne peut pas remplacer A, 7 ou 10",
+              selectedCards: [],
+            };
+          }
 
-        // Vérifier l'ordre chronologique
-        const currentValue = card.value;
-        const expectedValue = numericValues[column.cards.length];
-        if (currentValue !== expectedValue) {
-          return state;
+          //desactiver l'attaque pour la categorie correspondante
+          const currentCategory = initialAttackButtons[column.cards.length].category;
+          newButtonsState = state.columns[suit].attackStatus.attackButtons.map((button) => {
+            if (button.category === currentCategory) {
+              return { ...button, active: false }; // Désactiver les boutons de la catégorie
+            }
+            return button;
+          });
+        } else {
+          // Si on remplace un Joker, réactiver les attaques pour cette catégorie
+          const cardToReplace = column.cards[column.cards.length];
+          if (cardToReplace && cardToReplace.type === "joker") {
+            const currentCategory = initialAttackButtons[column.cards.length].category;
+            newButtonsState = state.columns[suit].attackStatus.attackButtons.map((button) => {
+              if (button.category === currentCategory && !button.hasAttacked) {
+                return { ...button, active: true }; // Réactiver les boutons si pas encore attaqué
+              }
+              return button;
+            });
+          }
         }
 
         // Jouer le son de carte
@@ -1242,6 +1316,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             [suit]: {
               ...column,
               cards: [...column.cards, card],
+              attackStatus: { attackButtons: newButtonsState },
             },
           },
           currentPlayer: {
@@ -1378,6 +1453,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         targetColumn.reserveSuit = playerCard;
       }
 
+      console.log(updatedPlayer);
+
       return {
         ...state,
         currentPlayer: updatedPlayer,
@@ -1390,6 +1467,63 @@ export const useGameStore = create<GameStore>((set, get) => ({
         canEndTurn: true,
         phase: "action",
       };
+    });
+  },
+  handleJokerExchange: (selectedCard: Card) => {
+    set((state) => {
+      if (state.phase !== "action" || state.hasPlayedAction) return state;
+
+      console.log(selectedCard);
+
+      const updatedPlayer = { ...state.currentPlayer };
+      const isInHand = updatedPlayer.hand.some((c) => c.id === selectedCard.id);
+
+      const jokerCard = state.columns[selectedCard.suit].cards[parseInt(selectedCard.value) - 1];
+
+      if (isInHand) {
+        updatedPlayer.hand = updatedPlayer.hand.map((c) => (c.id === selectedCard.id ? jokerCard : c));
+      } else {
+        updatedPlayer.reserve = updatedPlayer.reserve.map((c) => (c.id === selectedCard.id ? jokerCard : c));
+      }
+
+      const updatedColumns = { ...state.columns };
+
+      updatedColumns[selectedCard.suit].cards = updatedColumns[selectedCard.suit].cards.map(
+        (card: Card, index: number) => ((index + 1).toString() == selectedCard.value ? selectedCard : card)
+      );
+
+      const attackBtns = updatedColumns[selectedCard.suit].attackStatus.attackButtons;
+
+      const newAttackButtons = attackBtns.map((btn) => {
+        return !btn.active && !btn.wasUsed ? { ...btn, active: true } : { ...btn };
+      });
+
+      updatedColumns[selectedCard.suit].attackStatus.attackButtons = newAttackButtons;
+
+      console.log(updatedPlayer);
+
+      return {
+        ...state,
+        currentPlayer: updatedPlayer,
+        columns: updatedColumns,
+        hasPlayedAction: true,
+        exchangeMode: false,
+        selectedForExchange: null,
+        playedCardsLastTurn: 0,
+        message: "Échange d'activateurs effectué",
+        canEndTurn: true,
+        phase: "action",
+      };
+    });
+  },
+  displayJokerExchangePopup: (availableCards: Card[]) => {
+    set((state) => {
+      return { ...state, showJokerExchangePopup: true, availableCards };
+    });
+  },
+  closeJokerExchangePopup: () => {
+    set((state) => {
+      return { ...state, showJokerExchangePopup: false };
     });
   },
 
@@ -1417,10 +1551,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
           return state;
         }
 
-        // Désactiver tous les boutons de la même catégorie??????????? SAA
+        // Désactiver tous les boutons de la même catégorie
         const newButtonsState = buttonsState.map((button) => {
           if (button.category === clickedButtonState.category) {
-            return { ...button, active: false }; // Désactiver les boutons de la catégorie
+            return { ...button, active: false, wasUsed: true }; // Désactiver les boutons de la catégorie
           }
           return button;
         });
@@ -1469,7 +1603,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Désactiver tous les boutons de la même catégorie
       const newButtonsState = buttonsState.map((button) => {
         if (button.category === clickedButtonState.category) {
-          return { ...button, active: false }; // Désactiver les boutons de la catégorie
+          return { ...button, active: false, wasUsed: true }; // Désactiver les boutons de la catégorie
         }
         return button;
       });
@@ -1626,4 +1760,5 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
   setSelectedSacrificeCards: (cards: Card[]) => set({ selectedSacrificeCards: cards }),
+  setSelectedJokerExchangeCards: (cards: Card[]) => set({ selectedCards: cards }),
 }));

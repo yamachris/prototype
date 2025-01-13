@@ -8,8 +8,13 @@ export const createRevolutionActions: StateCreator<GameStore> = (set) => ({
     set((state: GameStore) => {
       const column = state.columns[suit];
 
+      const isJokerReplaceCard = column.cards.some((card) => card.type === "joker");
+
+      console.log("isJokerReplaceCard ", isJokerReplaceCard);
+      console.log(column.cards);
+
       // Vérifie si la colonne est complète (10 cartes)
-      if (column.cards.length === 10) {
+      if (column.cards.length === 10 && !isJokerReplaceCard) {
         // Jouer le son de révolution
         const audioManager = AudioManager.getInstance();
         audioManager.playRevolutionSound();
@@ -57,7 +62,8 @@ export const createRevolutionActions: StateCreator<GameStore> = (set) => ({
           },
           playedCardsLastTurn: 1,
 
-          nextPhase: state.currentPlayer.hand.length + state.currentPlayer.reserve.length === 7 ? "discard" : state.phase,
+          nextPhase:
+            state.currentPlayer.hand.length + state.currentPlayer.reserve.length === 7 ? "discard" : state.phase,
           message: "🎉 RÉVOLUTION ! La colonne a été réinitialisée et peut être réactivée.",
           showRevolutionPopup: true,
           hasPlayedAction: true,

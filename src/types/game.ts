@@ -10,20 +10,21 @@ export type attackCardButton = {
   id: string;
   category: string; // Catégorie du bouton
   active: boolean; // État du bouton (actif ou inactif)
+  wasUsed: boolean; //Est ce que le bouton a déjà été utilisé pour attaquer
 };
 
 export const initialAttackButtons: attackCardButton[] = [
-  { id: "A", category: "1", active: true },
-  { id: "2", category: "1", active: true },
-  { id: "3", category: "1", active: true },
-  { id: "4", category: "2", active: true },
-  { id: "5", category: "2", active: true },
-  { id: "6", category: "2", active: true },
-  { id: "7", category: "3", active: false }, //la carte 7 toujours à false
-  { id: "8", category: "4", active: true },
-  { id: "9", category: "5", active: true },
-  { id: "J", category: "6", active: true },
-  { id: "K", category: "7", active: true },
+  { id: "A", category: "1", active: true, wasUsed: false },
+  { id: "2", category: "1", active: true, wasUsed: false },
+  { id: "3", category: "1", active: true, wasUsed: false },
+  { id: "4", category: "2", active: true, wasUsed: false },
+  { id: "5", category: "2", active: true, wasUsed: false },
+  { id: "6", category: "2", active: true, wasUsed: false },
+  { id: "7", category: "3", active: false, wasUsed: false }, //la carte 7 toujours à false
+  { id: "8", category: "4", active: true, wasUsed: false },
+  { id: "9", category: "5", active: true, wasUsed: false },
+  { id: "J", category: "6", active: true, wasUsed: false },
+  { id: "K", category: "7", active: true, wasUsed: false },
 ];
 
 export type Card = {
