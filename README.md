@@ -1,4 +1,4 @@
-# Projet de Jeu de Cartes
+# Projet de Jeu de Cartes v2
 
 Ce projet est une application de jeu de cartes interactive développée avec React et TypeScript.
 
