@@ -32,7 +32,7 @@ export class AudioManager {
     private initBackgroundMusic() {
         try {
             this.backgroundMusic = new Audio();
-            this.backgroundMusic.src = '/assets/sound-design/music/jazz_loop_119bpm.wav';
+            this.backgroundMusic.src = '/assets/sound-design/jazz_loop_119bpm.wav';
             if (this.backgroundMusic) {
                 this.backgroundMusic.loop = true;
                 this.backgroundMusic.volume = this.volume;
@@ -70,12 +70,11 @@ export class AudioManager {
         try {
             console.log("Initialisation du son de révolution...");
             this.revolutionSound = new Audio();
-            this.revolutionSound.src = '/assets/sound-design/effects/revolution normale.wav';
+            this.revolutionSound.src = '/assets/sound-design/revolution normale.wav';
             if (this.revolutionSound) {
                 this.revolutionSound.volume = this.revolutionVolume;
                 this.revolutionSound.load();
                 
-                // Ajouter des événements pour suivre l'état du chargement
                 this.revolutionSound.onloadeddata = () => {
                     console.log("Son de révolution chargé avec succès");
                 };
@@ -94,11 +93,9 @@ export class AudioManager {
             this.drawSound = new Audio();
             this.drawSound.src = '/assets/sound-design/tirer 6.wav';
             if (this.drawSound) {
-                // Volume plus élevé pour le son de pioche
                 this.drawSound.volume = this.volume * 20;
                 this.drawSound.load();
                 
-                // Ajouter des événements pour suivre l'état du chargement
                 this.drawSound.onloadeddata = () => {
                     console.log("Son de pioche chargé avec succès");
                 };
