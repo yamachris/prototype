@@ -3,21 +3,12 @@ import { create } from "zustand"; // Zustand est utilisé pour la gestion d'éta
 import { Card, Player, Phase, Suit, ColumnState, initialAttackButtons } from "../types/game";
 import { Card as CardType } from "../types/game";
 import { createDeck, drawCards, shuffleDeck } from "../utils/deck";
-import { t } from "i18next";
+import i18next from "i18next"; 
 import { AudioManager } from "../sound-design/audioManager";
 import { handleCardPlacement, handleJokerAction as handleJokerEffect, distributeCards } from "../utils/gameLogic";
-import i18next from "i18next"; // Importez i18next directement
 import i18n from "../i18n/config";
-import { createColumnActions } from "./slices/columnActions";
-import { createRevolutionActions } from "./slices/revolutionActions";
-import { createSacrificeActions } from "./slices/sacrificeActions";
-import { createKingDefenseActions } from "./slices/kingDefense"; // Importer les actions du Roi
-import { handleValetAttack } from "./slices/valetActions"; // Importer handleValetAttack
 import { Columns } from "lucide-react";
 import { attackCardButton } from "../types/game";
-
-// Au début du fichier, après les autres imports
-const t = (key: string) => i18next.t(key);
 
 // Interface définissant la structure de l'état du jeu
 interface GameState {
@@ -420,7 +411,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           ...state,
           phase: "action",
           hasDrawn: true,
-          message: t("game.messages.actionPhase"),
+          message: i18next.t("game.messages.actionPhase"),
         };
       }
 
@@ -452,7 +443,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
         phase: "action",
         hasDrawn: true,
-        message: t("game.messages.actionPhase"),
+        message: i18next.t("game.messages.actionPhase"),
       };
     });
   },
@@ -481,7 +472,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       //     },
       //     selectedCards: [],
       //     turn: state.turn + 1,
-      //     message: t("game.messages.drawPhase"),
+      //     message: i18next.t("game.messages.drawPhase"),
       //     canBlock: false,
       //     blockableColumns: [],
       //   };
@@ -503,8 +494,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
         selectedCards: [],
         turn: state.turn + 1,
-        // message: t("game.messages.discardPhase"),
-        message: nextPhase === "discard" ? t("game.messages.discardPhase") : t("game.messages.drawPhase"),
+        // message: i18next.t("game.messages.discardPhase"),
+        message: nextPhase === "discard" ? i18next.t("game.messages.discardPhase") : i18next.t("game.messages.drawPhase"),
 
         canBlock: false,
         blockableColumns: [],
@@ -577,7 +568,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         hasDrawn: false,
         hasPlayedAction: false,
         hasUsedFirstStrategicShuffle: false,
-        message: t("game.messages.strategicShuffleFirst"),
+        message: i18next.t("game.messages.strategicShuffleFirst"),
       };
     });
   },
@@ -592,7 +583,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           ...state,
           phase: "draw",
           hasDiscarded: false,
-          message: t("game.messages.drawPhase"),
+          message: i18next.t("game.messages.drawPhase"),
         };
       }
 
@@ -625,7 +616,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         hasDiscarded: true,
         selectedCards: [],
         phase: "draw",
-        message: t("game.messages.drawPhase"),
+        message: i18next.t("game.messages.drawPhase"),
       };
     });
   },
@@ -676,7 +667,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           hand,
           reserve,
         },
-        message: t("game.messages.exchangeComplete"),
+        message: i18next.t("game.messages.exchangeComplete"),
       };
     });
   },
@@ -851,7 +842,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         hasDiscarded: nextPhase === "discard" ? false : true,
         hasDrawn: false,
         hasPlayedAction: false,
-        message: nextPhase === "discard" ? t("game.messages.discardPhase") : t("game.messages.drawPhase"),
+        message: nextPhase === "discard" ? i18next.t("game.messages.discardPhase") : i18next.t("game.messages.drawPhase"),
         canEndTurn: false,
         playedCardsLastTurn: 0,
       };
@@ -898,7 +889,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           hasDiscarded: true,
           hasDrawn: true,
           hasPlayedAction: false,
-          message: t("game.messages.strategicShuffleFirst"),
+          message: i18next.t("game.messages.strategicShuffleFirst"),
           isMessageClickable: true,
         };
       }
@@ -918,7 +909,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         hasDrawn: true,
         hasPlayedAction: true,
         canEndTurn: true,
-        message: t("game.messages.strategicShuffleNext"),
+        message: i18next.t("game.messages.strategicShuffleNext"),
         isMessageClickable: true,
       };
     });
@@ -938,7 +929,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       hasDiscarded: true,
       hasPlayedAction: true,
       awaitingStrategicShuffleConfirmation: false,
-      message: t("game.messages.strategicShuffleNext"),
+      message: i18next.t("game.messages.strategicShuffleNext"),
     }));
   },
 
@@ -969,7 +960,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           hasUsedStrategicShuffle: true,
         },
         hasPlayedAction: true,
-        message: t("game.messages.strategicShuffleFirst"),
+        message: i18next.t("game.messages.strategicShuffleFirst"),
       };
     });
   },
@@ -1104,7 +1095,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
               selectedCards: [],
               hasPlayedAction: true,
               playedCardsLastTurn: 2,
-              message: t("game.messages.faceCardPlaced", {
+              message: i18next.t("game.messages.faceCardPlaced", {
                 value: faceCard.value === "J" ? "Valet" : "Roi",
               }),
             };
@@ -1159,7 +1150,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
               selectedCards: [],
               hasPlayedAction: true,
               playedCardsLastTurn: 2,
-              message: t("game.messages.columnActivated"),
+              message: i18next.t("game.messages.columnActivated"),
             };
           }
         }
@@ -1178,7 +1169,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           if (column.reserveSuit !== null) {
             return {
               ...state,
-              message: t("game.messages.reserveSuitOccupied"),
+              message: i18next.t("game.messages.reserveSuitOccupied"),
             };
           }
 
@@ -1205,7 +1196,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             selectedCards: [],
             hasPlayedAction: true,
             playedCardsLastTurn: 1,
-            message: t("game.messages.cardPlaced"),
+            message: i18next.t("game.messages.cardPlaced"),
           };
         }
 
@@ -1266,7 +1257,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             selectedCards: [],
             hasPlayedAction: true,
             playedCardsLastTurn: 1,
-            message: t("game.messages.cardPlaced"),
+            message: i18next.t("game.messages.cardPlaced"),
           };
         }
 
@@ -1327,7 +1318,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           selectedCards: [],
           hasPlayedAction: true,
           playedCardsLastTurn: 1,
-          message: t("game.messages.cardPlaced"),
+          message: i18next.t("game.messages.cardPlaced"),
         };
       }
 
@@ -1369,7 +1360,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             hasPlayedAction: true,
             playedCardsLastTurn: 2,
             canEndTurn: true,
-            message: t("game.messages.queenHealing", {
+            message: i18next.t("game.messages.queenHealing", {
               amount: healAmount,
             }),
           };
@@ -1417,7 +1408,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
         hasPlayedAction: true,
         playedCardsLastTurn: 2, // Pour passer directement à la pioche au tour suivant
-        message: t("game.messages.queenChallengeResult", {
+        message: i18next.t("game.messages.queenChallengeResult", {
           amount: healAmount,
           result: isCorrect ? "correct" : "incorrect",
         }),
@@ -1575,7 +1566,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           columns: updatedColumns,
           hasPlayedAction: true,
           // playedCardsLastTurn: 0,
-          // message: t("game.messages.valetAttack", {
+          // message: i18next.t("game.messages.valetAttack", {
           //   count: cardsDestroyedCount,
           //   suit: clickedAttackCard.suit,
           // }),
@@ -1696,7 +1687,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       canEndTurn: true,
       blockedColumns: [...state.blockedColumns, columnIndex],
       playedCardsLastTurn: 0,
-      message: t("game.messages.blockSuccess"),
+      message: i18next.t("game.messages.blockSuccess"),
     }));
   },
 
@@ -1744,16 +1735,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
         if (playedCardsLastTurn > 0) {
           return "";
         }
-        return hasDiscarded ? "" : t("game.messages.discardPhase");
+        return hasDiscarded ? "" : i18next.t("game.messages.discardPhase");
 
       case "draw":
-        return hasDrawn ? "" : t("game.messages.drawPhase");
+        return hasDrawn ? "" : i18next.t("game.messages.drawPhase");
 
       case "action":
         if (hasPlayedAction) {
           return "";
         }
-        return t("game.messages.actionPhase");
+        return i18next.t("game.messages.actionPhase");
 
       default:
         return "";

@@ -2,8 +2,8 @@
 export const config = {
   // URLs des serveurs
   servers: {
-    nextjs: 'http://localhost:3000',  // Serveur Next.js
-    api: 'http://localhost:3001',     // API NestJS
+    nextjs: 'http://localhost:3006',  // Serveur Next.js
+    api: 'http://localhost:3007',     // API NestJS
   },
   
   // Configuration du jeu

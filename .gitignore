@@ -25,3 +25,7 @@ dist-ssr
 
 # Large audio files
 public/assets/sound-design/music/jazz_loop_119bpm.wav
+
+
+# Next.js cache
+client/.next/*
