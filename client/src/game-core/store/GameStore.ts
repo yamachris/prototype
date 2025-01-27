@@ -9,6 +9,8 @@ import { handleCardPlacement, handleJokerAction as handleJokerEffect, distribute
 import i18n from "../i18n/config";
 import { Columns } from "lucide-react";
 import { attackCardButton } from "../types/game";
+import { gameApi } from "../../services/api";
+import { gameSocket } from "../../services/socket";
 
 // Interface définissant la structure de l'état du jeu
 interface GameState {
@@ -47,24 +49,25 @@ interface GameState {
   showJokerExchangePopup: boolean;
   sacrificeInfo: null;
   availableCards: Card[];
+  gameId: string | null;
 }
 
 // Ajout du type pour le store complet
 export interface GameStore extends GameState {
-  selectCard: (card: CardType) => void;
-  handleDiscard: (card: CardType) => void;
-  handleDrawCard: () => void;
+  selectCard: (card: CardType) => Promise<void>;
+  handleDiscard: (card: CardType) => Promise<void>;
+  handleDrawCard: () => Promise<void>;
   exchangeCards: (card1: CardType, card2: CardType) => void;
   handleJokerAction: (jokerCard: CardType, action: "heal" | "attack") => void;
   setAttackMode: (mode: boolean) => void;
   setMessage: (message: string) => void;
   handleStrategicShuffle: () => void;
-  endTurn: () => void;
+  endTurn: () => Promise<void>;
   setPhase: (phase: Phase) => void;
   canUseStrategicShuffle: () => boolean;
   confirmStrategicShuffle: () => void;
   getState: () => GameStore;
-  handleCardPlace: (suit: Suit, position: number) => void;
+  handleCardPlace: (suit: Suit, position: number) => Promise<void>;
   handleQueenChallenge: (isCorrect: boolean) => void;
   handleCardExchange: (columnCard: Card, playerCard: Card) => void;
   getPhaseMessage: (
@@ -88,14 +91,15 @@ export interface GameStore extends GameState {
   displayJokerExchangePopup: (availableCards: Card[]) => void;
   closeJokerExchangePopup: () => void;
   setSelectedJokerExchangeCards: (cards: Card[]) => void;
+  initializeGame: () => Promise<void>;
 }
 
 // Création du store avec Zustand
 export const useGameStore = create<GameStore>((set, get) => ({
   // État initial du jeu
   currentPlayer: {
-    id: "player-1",
-    name: "Joueur 1",
+    id: "",
+    name: "",
     health: 10,
     maxHealth: 10,
     hand: [],
@@ -104,7 +108,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     deck: [],
     hasUsedStrategicShuffle: false,
     profile: {
-      epithet: "Maître des Cartes",
+      epithet: "",
     },
   },
   selectedSacrificeCards: [],
@@ -183,324 +187,91 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showSacrificePopup: false,
   showJokerExchangePopup: false,
   sacrificeInfo: null,
+  availableCards: [],
+  gameId: null,
   ...createColumnActions(set),
   ...createRevolutionActions(set, get),
   ...createSacrificeActions(set, get),
   ...createKingDefenseActions(set, get), // Intégrer les actions du Roi
 
-  initializeGame: () => {
-    // Création et mélange du deck complet
-    const fullDeck = shuffleDeck(createDeck());
-
-    // Distribution aléatoire de 7 cartes
-    const [remainingDeck, initialHand] = drawCards(fullDeck, 7);
-
-    set({
-      currentPlayer: {
-        id: "player-1",
-        name: "Joueur 1",
-        health: 10,
-        maxHealth: 10,
-        hand: initialHand,
-        reserve: [],
-        discardPile: [],
-        deck: remainingDeck,
-        hasUsedStrategicShuffle: false,
-        profile: {
-          epithet: "Maître des Cartes",
-        },
-      },
-      deck: remainingDeck,
-      phase: "setup",
-      turn: 1,
-      selectedCards: [],
-      columns: {
-        hearts: {
-          cards: [],
-          isLocked: false,
-          hasLuckyCard: false,
-          activatorType: null,
-          sequence: [],
-          reserveSuit: null,
-          isReserveSuitLocked: false,
-          faceCards: {},
-          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
-        },
-        diamonds: {
-          cards: [],
-          isLocked: false,
-          hasLuckyCard: false,
-          activatorType: null,
-          sequence: [],
-          reserveSuit: null,
-          isReserveSuitLocked: false,
-          faceCards: {},
-          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
-        },
-        clubs: {
-          cards: [],
-          isLocked: false,
-          hasLuckyCard: false,
-          activatorType: null,
-          sequence: [],
-          reserveSuit: null,
-          isReserveSuitLocked: false,
-          faceCards: {},
-          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
-        },
-        spades: {
-          cards: [],
-          isLocked: false,
-          hasLuckyCard: false,
-          activatorType: null,
-          sequence: [],
-          reserveSuit: null,
-          isReserveSuitLocked: false,
-          faceCards: {},
-          attackStatus: { attackButtons: initialAttackButtons, lastAttackCard: {} },
-        },
-      },
-      hasDiscarded: false,
-      hasDrawn: false,
-      hasPlayedAction: false,
-      playedCardsLastTurn: 0,
-      attackMode: false,
-      message: "",
-      isGameOver: false,
-      winner: null,
-      canEndTurn: true,
-      hasUsedFirstStrategicShuffle: false,
-      awaitingStrategicShuffleConfirmation: false,
-      queenChallenge: {
-        isActive: false,
-        queen: null,
-      },
-      isMessageClickable: false,
-      exchangeMode: false,
-      selectedForExchange: null,
-      showRevolutionPopup: false,
-      blockableColumns: [],
-      canBlock: false,
-      blockedColumns: [],
-    });
-  },
-
-  selectCard: (card: Card) => {
-    set((state) => {
-      // Si une action a déjà été jouée, on ne peut plus sélectionner de cartes
-      if (state.hasPlayedAction) return state;
-
-      const isCardSelected = state.selectedCards.some((c) => c.id === card.id);
-
-      // Si la carte est déjà sélectionnée, on la désélectionne
-      if (isCardSelected) {
-        return {
-          ...state,
-          selectedCards: state.selectedCards.filter((c) => c.id !== card.id),
-          message: "",
-        };
-      }
-
-      // Si on a déjà 2 cartes sélectionnées, on ne peut pas en sélectionner plus
-      if (state.selectedCards.length >= 2) {
-        return state;
-      }
-
-      // Sélection de la carte
-      const newSelectedCards = [...state.selectedCards, card];
-      let message = "";
-
-      // Messages selon la combinaison
-      if (newSelectedCards.length === 1) {
-        if (card.value === "A") {
-          message = "Sélectionnez un Joker ou un 7 pour activer la colonne";
-        } else if (card.type === "joker" || card.value === "7") {
-          message = "Sélectionnez un As pour activer une colonne";
-        }
-      } else if (newSelectedCards.length === 2) {
-        const [card1, card2] = newSelectedCards;
-        const hasAs = card1.value === "A" || card2.value === "A";
-        const hasActivator =
-          card1.type === "joker" || card1.value === "7" || card2.type === "joker" || card2.value === "7";
-
-        if (hasAs && hasActivator) {
-          message = "Cliquez sur une colonne pour l'activer";
-        }
-      }
-
-      return {
-        ...state,
-        selectedCards: newSelectedCards,
-        message,
-      };
-    });
-  },
-
-  handleJokerAction: (jokerCard: Card, action: "heal" | "attack") => {
-    set((state) => {
-      if (jokerCard.type !== "joker" || state.hasPlayedAction || state.phase !== "action") {
-        return state;
-      }
-
-      let updatedPlayer = { ...state.currentPlayer };
-
-      if (action === "heal") {
-        // Jouer le son de soin
-        AudioManager.getInstance().playHealSound();
-
-        // Augmente les PV max et actuels de 3
-        const newHealth = updatedPlayer.health + 3;
-        updatedPlayer.maxHealth = newHealth;
-        updatedPlayer.health = newHealth;
-
-        // Déplace le Joker vers la défausse
-        updatedPlayer.hand = updatedPlayer.hand.filter((c) => c.id !== jokerCard.id);
-        updatedPlayer.reserve = updatedPlayer.reserve.filter((c) => c.id !== jokerCard.id);
-        updatedPlayer.discardPile = [...updatedPlayer.discardPile, jokerCard];
-
-        return {
-          ...state,
-          currentPlayer: updatedPlayer,
-          hasPlayedAction: true,
-          selectedCards: [],
-          playedCardsLastTurn: 1,
-          message: `🎭 Joker : PV augmentés à ${newHealth}/${newHealth}`,
-          canEndTurn: true,
-          phase: "action",
-        };
-      } else if (action === "attack") {
-        // Simule une attaque en mode solo
-        updatedPlayer.hand = updatedPlayer.hand.filter((c) => c.id !== jokerCard.id);
-        updatedPlayer.reserve = updatedPlayer.reserve.filter((c) => c.id !== jokerCard.id);
-        updatedPlayer.discardPile = [...updatedPlayer.discardPile, jokerCard];
-
-        return {
-          ...state,
-          currentPlayer: updatedPlayer,
-          hasPlayedAction: true,
-          selectedCards: [],
-          playedCardsLastTurn: 1,
-          message: "🗡️ Le Joker a détruit une carte adverse !",
-          canEndTurn: true,
-          phase: "action",
-        };
-      }
-
-      return state;
-    });
-  },
-
-  handleDrawCard: () => {
-    set((state) => {
-      if (state.phase !== "draw" || state.hasDrawn) return state;
-
-      // Calculer combien de cartes manquent pour compléter la main et la réserve
-      const currentHandCount = state.currentPlayer.hand.length;
-      const currentReserveCount = state.currentPlayer.reserve.length;
-      const maxHandCards = 5;
-      const maxReserveCards = 2;
-
-      // Calculer combien de cartes on peut ajouter
-      const handSpace = Math.max(0, maxHandCards - currentHandCount);
-      const reserveSpace = Math.max(0, maxReserveCards - currentReserveCount);
-      const cardsNeeded = handSpace + reserveSpace;
-
-      // Si on a déjà le maximum de cartes
-      if (cardsNeeded <= 0) {
-        return {
-          ...state,
-          phase: "action",
-          hasDrawn: true,
-          message: i18next.t("game.messages.actionPhase"),
-        };
-      }
-
-      // Jouer le son de pioche
-      AudioManager.getInstance().playDrawSound();
-
-      // Piocher les cartes nécessaires
-      const [newDeck, drawnCards] = drawCards(state.deck, cardsNeeded);
-
-      // Distribuer les cartes en priorité à la main
-      const newHand = [...state.currentPlayer.hand];
-      const newReserve = [...state.currentPlayer.reserve];
-
-      drawnCards.forEach((card) => {
-        if (newHand.length < maxHandCards) {
-          newHand.push(card);
-        } else if (newReserve.length < maxReserveCards) {
-          newReserve.push(card);
-        }
+  initializeGame: async () => {
+    try {
+      const gameId = await gameApi.createGame();
+      const gameState = await gameApi.getGameState(gameId);
+      
+      gameSocket.connect();
+      gameSocket.joinGame(gameId);
+      gameSocket.onGameState((state) => {
+        set({ ...state, gameId });
       });
 
-      return {
-        ...state,
-        deck: newDeck,
-        currentPlayer: {
-          ...state.currentPlayer,
-          hand: newHand,
-          reserve: newReserve,
-        },
-        phase: "action",
-        hasDrawn: true,
-        message: i18next.t("game.messages.actionPhase"),
-      };
-    });
+      set({ ...gameState, gameId });
+    } catch (error) {
+      console.error('Failed to initialize game:', error);
+    }
   },
 
-  handlePassTurn: () => {
-    set((state) => {
-      // On ne peut passer le tour que si on est en phase d'action et qu'on a soit joué une action soit passé
-      if (state.phase !== "action" || !state.hasPlayedAction) {
-        return state;
-      }
+  selectCard: async (card: Card) => {
+    const { gameId } = get();
+    if (!gameId) return;
 
-      const nextPhase = state.currentPlayer.reserve.length + state.currentPlayer.hand.length !== 7 ? "draw" : "discard";
-      console.log("nextPhase ", nextPhase);
+    try {
+      const gameState = await gameApi.selectCard(gameId, card.id);
+      set(gameState);
+    } catch (error) {
+      console.error('Failed to select card:', error);
+    }
+  },
 
-      // Si on a joué des cartes au tour précédent, on passe directement à la phase de pioche
-      // if (state.playedCardsLastTurn > 0) {
-      //   return {
-      //     ...state,
-      //     phase: "draw", // On passe directement à la pioche
-      //     hasDiscarded: true, // On marque la défausse comme déjà faite
-      //     hasDrawn: false,
-      //     hasPlayedAction: false,
-      //     currentPlayer: {
-      //       ...state.currentPlayer,
-      //       hasUsedStrategicShuffle: false,
-      //     },
-      //     selectedCards: [],
-      //     turn: state.turn + 1,
-      //     message: i18next.t("game.messages.drawPhase"),
-      //     canBlock: false,
-      //     blockableColumns: [],
-      //   };
-      // }
+  handleDiscard: async (card: Card) => {
+    const { gameId } = get();
+    if (!gameId) return;
 
-      // Si on n'a pas joué de cartes
+    try {
+      const gameState = await gameApi.discard(gameId, card.id);
+      set(gameState);
+      AudioManager.playSound('discard');
+    } catch (error) {
+      console.error('Failed to discard card:', error);
+    }
+  },
 
-      return {
-        ...state,
-        phase: nextPhase,
-        // hasDiscarded: false,
-        hasDiscarded: nextPhase === "discard" ? false : true,
+  handleDrawCard: async () => {
+    const { gameId } = get();
+    if (!gameId) return;
 
-        hasDrawn: false,
-        hasPlayedAction: false,
-        currentPlayer: {
-          ...state.currentPlayer,
-          hasUsedStrategicShuffle: false,
-        },
-        selectedCards: [],
-        turn: state.turn + 1,
-        // message: i18next.t("game.messages.discardPhase"),
-        message: nextPhase === "discard" ? i18next.t("game.messages.discardPhase") : i18next.t("game.messages.drawPhase"),
+    try {
+      const gameState = await gameApi.drawCard(gameId);
+      set(gameState);
+      AudioManager.playSound('draw');
+    } catch (error) {
+      console.error('Failed to draw card:', error);
+    }
+  },
 
-        canBlock: false,
-        blockableColumns: [],
-      };
-    });
+  handleCardPlace: async (suit: Suit, position: number) => {
+    const { gameId } = get();
+    if (!gameId) return;
+
+    try {
+      const gameState = await gameApi.placeCard(gameId, suit, position);
+      set(gameState);
+      AudioManager.playSound('place');
+    } catch (error) {
+      console.error('Failed to place card:', error);
+    }
+  },
+
+  endTurn: async () => {
+    const { gameId } = get();
+    if (!gameId) return;
+
+    try {
+      const gameState = await gameApi.endTurn(gameId);
+      set(gameState);
+    } catch (error) {
+      console.error('Failed to end turn:', error);
+    }
   },
   // Méthodes de gestion des cartes :
 
@@ -807,7 +578,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setAttackMode: (value: boolean) => set({ attackMode: value }),
   setMessage: (message: string) => set({ message: message }),
 
-  endTurn: () => {
+  endTurn: async () => {
     set((state) => {
       const updatedColumns = { ...state.columns };
 
@@ -860,59 +631,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     );
   },
 
-  handleStrategicShuffle: () => {
-    set((state) => {
-      if (!state.canUseStrategicShuffle()) {
-        return state;
-      }
+  handleStrategicShuffle: async () => {
+    const { gameId } = get();
+    if (!gameId) return;
 
-      // Jouer le son de mélange
-      AudioManager.getInstance().playShuffleSound();
-
-      const allDiscardedCards = [...state.currentPlayer.hand, ...state.currentPlayer.discardPile];
-      const allCards = [...state.deck, ...allDiscardedCards];
-      const newDeck = shuffleDeck(allCards);
-      const [remainingDeck, newHand] = drawCards(newDeck, 5);
-
-      if (!state.hasUsedFirstStrategicShuffle) {
-        return {
-          ...state,
-          deck: remainingDeck,
-          currentPlayer: {
-            ...state.currentPlayer,
-            hand: newHand,
-            discardPile: [],
-            hasUsedStrategicShuffle: true,
-          },
-          hasUsedFirstStrategicShuffle: true,
-          phase: "action",
-          hasDiscarded: true,
-          hasDrawn: true,
-          hasPlayedAction: false,
-          message: i18next.t("game.messages.strategicShuffleFirst"),
-          isMessageClickable: true,
-        };
-      }
-
-      // Si ce n'est pas le premier mélange stratégique
-      return {
-        ...state,
-        deck: remainingDeck,
-        currentPlayer: {
-          ...state.currentPlayer,
-          hand: newHand,
-          discardPile: [],
-          hasUsedStrategicShuffle: true,
-        },
-        phase: "action",
-        hasDiscarded: true,
-        hasDrawn: true,
-        hasPlayedAction: true,
-        canEndTurn: true,
-        message: i18next.t("game.messages.strategicShuffleNext"),
-        isMessageClickable: true,
-      };
-    });
+    try {
+      const gameState = await gameApi.strategicShuffle(gameId);
+      set(gameState);
+    } catch (error) {
+      console.error('Failed to strategic shuffle:', error);
+    }
   },
 
   confirmStrategicShuffle: () => {
@@ -973,7 +701,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     );
   },
 
-  handleCardPlace: (suit: Suit, position: number) => {
+  handleCardPlace: async (suit: Suit, position: number) => {
     set((state) => {
       const column = state.columns[suit];
       const reserveSuitCard = column.reserveSuit;
