@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { GameState } from '../types/game';
 
 @Entity('games')
@@ -8,6 +14,9 @@ export class Game {
 
   @Column({ type: 'jsonb' })
   state: GameState;
+
+  @Column({ type: 'text' })
+  game_mode?: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -21,6 +21,21 @@ export const createDeck = (): Card[] => {
 
   const deck: Card[] = [];
 
+  // Créer les cartes normales
+  suits.forEach((suit) => {
+    VALUES.forEach((value) => {
+      // for (let value = 1; value <= 13; value++) {
+      deck.push({
+        id: uuidv4(),
+        suit,
+        value,
+        type: 'STANDARD',
+        // isSpecial: value > 10,
+        // isActivator: value === 1,
+      });
+    });
+  });
+
   // Ajouter les jokers
   deck.push({
     id: uuidv4(),
@@ -38,30 +53,15 @@ export const createDeck = (): Card[] => {
     isJoker: true,
   });
 
-  // Créer les cartes normales
-  suits.forEach((suit) => {
-    VALUES.forEach((value) => {
-      // for (let value = 1; value <= 13; value++) {
-      deck.push({
-        id: uuidv4(),
-        suit,
-        value,
-        type: 'STANDARD',
-        // isSpecial: value > 10,
-        // isActivator: value === 1,
-      });
-    });
-  });
-
   return deck;
 };
 
 export const shuffleDeck = (deck: Card[]): Card[] => {
   const shuffled = [...deck];
-  // for (let i = shuffled.length - 1; i > 0; i--) {
-  //   const j = Math.floor(Math.random() * (i + 1));
-  //   [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  // }
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   return shuffled;
 };
 

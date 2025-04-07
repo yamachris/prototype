@@ -1,15 +1,23 @@
 import { Controller, Post, Body, Get, Param, Put } from '@nestjs/common';
 import { GameService } from './game.service';
-import { Suit } from '../types/game';
+import { Suit, Card } from '../types/game';
 
 @Controller('game')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
   @Post('create')
-  async createGame() {
-    const gameId = await this.gameService.createGame();
+  async createGame(@Body() body: { mode: string }) {
+    const gameId = await this.gameService.createGame(body.mode);
     return { gameId };
+  }
+
+  @Post('move-to-reserve')
+  async setupGame(
+    @Param('gameId') gameId: string,
+    @Body() body: { card: Card },
+  ) {
+    return await this.gameService.moveToReserve(gameId, body.card);
   }
 
   @Get(':gameId')
@@ -20,9 +28,13 @@ export class GameController {
   @Put(':gameId/place-card')
   async placeCard(
     @Param('gameId') gameId: string,
-    @Body() body: { suit: Suit; position: number },
+    @Body() body: { suit: Suit; selectedCards: Card[] },
   ) {
-    return await this.gameService.handleCardPlace(gameId, body.suit, body.position);
+    return await this.gameService.handleCardPlace(
+      gameId,
+      body.suit,
+      body.selectedCards,
+    );
   }
 
   @Post(':gameId/draw-card')
@@ -31,11 +43,8 @@ export class GameController {
   }
 
   @Post(':gameId/discard')
-  async discard(
-    @Param('gameId') gameId: string,
-    @Body() body: { cardId: string },
-  ) {
-    return await this.gameService.handleDiscard(gameId, body.cardId);
+  async discard(@Param('gameId') gameId: string, @Body() body: { card: Card }) {
+    return await this.gameService.handleDiscardCard(gameId, body.card);
   }
 
   @Post(':gameId/end-turn')
