@@ -11,8 +11,8 @@ export function DeckArea() {
   const { t } = useTranslation();
 
   const totalCards = currentPlayer.hand.length + currentPlayer.reserve.length;
-  const canDrawToHand = phase === "draw" && currentPlayer.hand.length < 5;
-  const canDrawToReserve = phase === "draw" && currentPlayer.reserve.length < 2 && totalCards < 7;
+  const canDrawToHand = phase === "DRAW" && currentPlayer.hand.length < 5;
+  const canDrawToReserve = phase === "DRAW" && currentPlayer.reserve.length < 2 && totalCards < 7;
   const isDeckEmpty = deck.length === 0;
   const hasDiscardPile = currentPlayer.discardPile.length > 0;
 
@@ -62,7 +62,7 @@ export function DeckArea() {
         </button>
 
         {/* Options de pioche */}
-        {phase === "draw" && totalCards < 7 && !isDeckEmpty && (
+        {phase === "DRAW" && totalCards < 7 && !isDeckEmpty && (
           <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
             {canDrawToHand && (
               <button

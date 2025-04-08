@@ -16,7 +16,7 @@ export function isKingDefeated(attackingCard: Card, defendingKing: Card): boolea
   const defeatingValues = ["8", "9"];
   return (
     (attackingCard.suit === defendingKing.suit && defeatingValues.includes(attackingCard.value)) ||
-    attackingCard.type === "joker"
+    attackingCard.type === "JOKER"
   );
 }
 
@@ -25,7 +25,7 @@ export function handleKingDefeat(state: GameStore, attackingCard: Card, defendin
   // Retire le Roi du terrain
   const updatedColumns = { ...state.columns };
   const column = updatedColumns[defendingKing.suit];
-  
+
   if (column && column.faceCards) {
     // Supprimer le Roi des faceCards
     const { K, ...restFaceCards } = column.faceCards;
@@ -37,12 +37,14 @@ export function handleKingDefeat(state: GameStore, attackingCard: Card, defendin
       columns: updatedColumns,
       currentPlayer: {
         ...state.currentPlayer,
-        discardPile: [...state.currentPlayer.discardPile, defendingKing]
+        discardPile: [...state.currentPlayer.discardPile, defendingKing],
       },
-      message: `Le Roi de ${defendingKing.suit} a été vaincu par ${attackingCard.type === "joker" ? "le Joker" : attackingCard.value} !`,
+      message: `Le Roi de ${defendingKing.suit} a été vaincu par ${
+        attackingCard.type === "JOKER" ? "le Joker" : attackingCard.value
+      } !`,
       hasPlayedAction: true,
       canEndTurn: true,
-      playedCardsLastTurn: 1
+      playedCardsLastTurn: 1,
     };
   }
 
@@ -65,7 +67,7 @@ export const createKingDefenseActions = (set: any, get: any) => ({
         message: `Attaque bloquée par le Roi de ${defendingKing.suit}!`,
         hasPlayedAction: true,
         canEndTurn: true,
-        playedCardsLastTurn: 1
+        playedCardsLastTurn: 1,
       });
       return true; // Attaque bloquée
     }
@@ -77,5 +79,5 @@ export const createKingDefenseActions = (set: any, get: any) => ({
     }
 
     return false; // L'attaque continue normalement
-  }
+  },
 });

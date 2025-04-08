@@ -145,7 +145,7 @@ export function handleJokerEffect(
     deck.push(
       {
         id: 'joker-red',
-        type: 'joker',
+        type: 'JOKER',
         value: 'JOKER',
         suit: 'special',
         color: 'red',
@@ -153,7 +153,7 @@ export function handleJokerEffect(
       },
       {
         id: 'joker-black',
-        type: 'joker',
+        type: 'JOKER',
         value: 'JOKER',
         suit: 'special',
         color: 'black',
@@ -199,8 +199,7 @@ export function handleJokerEffect(
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 import { Card, Suit, Value } from "../types/game";
-
-const SUITS: Suit[] = ["diamonds", "spades"]; // Enseignes : Carreau et Pique
+const SUITS: Suit[] = ["DIAMONDS", "SPADES"]; // Enseignes : Carreau et Pique
 const VALUES: Value[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
 export function createDeck(): Card[] {
@@ -208,17 +207,17 @@ export function createDeck(): Card[] {
   deck.push(
     {
       id: "joker-red",
-      type: "joker",
+      type: "JOKER",
       value: "JOKER",
-      suit: "special",
+      suit: "SPECIAL",
       color: "red",
       isRedJoker: true,
     },
     {
       id: "joker-black",
-      type: "joker",
+      type: "JOKER",
       value: "JOKER",
-      suit: "special",
+      suit: "SPECIAL",
       color: "black",
       isRedJoker: false,
     }
@@ -226,7 +225,7 @@ export function createDeck(): Card[] {
 
   // Création des cartes pour Carreau et Pique (As jusqu'à Roi)
   SUITS.forEach((suit) => {
-    const color = suit === "diamonds" ? "red" : "black"; // Couleur selon l'enseigne
+    const color = suit === "DIAMONDS" ? "red" : "black"; // Couleur selon l'enseigne
 
     VALUES.forEach((value) => {
       deck.push({

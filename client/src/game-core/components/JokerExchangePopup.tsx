@@ -40,14 +40,14 @@ export const JokerExchangePopup: React.FC = () => {
   };
 
   const getSuitSymbol = (suit: string) => {
-    switch (suit.toLowerCase()) {
-      case "hearts":
+    switch (suit.toUpperCase()) {
+      case "HEARTS":
         return "♥";
-      case "diamonds":
+      case "DIAMONDS":
         return "♦";
-      case "clubs":
+      case "CLUBS":
         return "♣";
-      case "spades":
+      case "SPADES":
         return "♠";
       default:
         return "";
@@ -56,14 +56,14 @@ export const JokerExchangePopup: React.FC = () => {
 
   const groupCardsBySuit = () => {
     const grouped = {
-      hearts: [] as Card[],
-      diamonds: [] as Card[],
-      clubs: [] as Card[],
-      spades: [] as Card[],
+      HEARTS: [] as Card[],
+      DIAMONDS: [] as Card[],
+      CLUBS: [] as Card[],
+      SPADES: [] as Card[],
     };
 
     availableCards.forEach((card) => {
-      grouped[card.suit.toLowerCase() as keyof typeof grouped].push(card);
+      grouped[card.suit.toUpperCase() as keyof typeof grouped].push(card);
     });
 
     return grouped;

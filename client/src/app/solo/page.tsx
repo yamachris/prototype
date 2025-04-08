@@ -1,21 +1,52 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import Loading from "../../components/Loading";
+import { useSearchParams } from "next/navigation";
+import { gameApi } from "@/services/api";
+import { GameState } from "@/game-core/types/game";
 
 // Import dynamique du composant App pour éviter les problèmes de SSR
-const GameApp = dynamic(() => import('../../game-core/App'), { 
+const GameApp = dynamic(() => import("../../game-core/App"), {
   ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center">
-      <div className="text-white text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
-        <p>Chargement du jeu...</p>
-      </div>
-    </div>
-  )
+  loading: () => <Loading />,
 });
 
 export default function SoloGame() {
-  return <GameApp />;
+  const searchParams = useSearchParams();
+  const [gameState, setGameState] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+
+  const gameId = searchParams.get("gameId");
+
+  useEffect(() => {
+    if (!gameId) {
+      setError("Game ID not found in URL");
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchGameState = async () => {
+      try {
+        setIsLoading(true);
+
+        const gState = await gameApi.getGameState(gameId);
+        gState.gameId = gameId;
+        setGameState(gState);
+      } catch (err) {
+        console.error("Failed to fetch game state:", err);
+        setError("Failed to load game. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGameState();
+  }, [gameId]);
+
+  if (isLoading) return <Loading />;
+
+  return <GameApp gameState={gameState} />;
 }

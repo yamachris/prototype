@@ -1,88 +1,82 @@
-import React from 'react';
-import { useGameStore } from '../store/gameStore';
-import { cn } from '../utils/cn';
-import { useTranslation } from 'react-i18next';
-import { ArrowDown } from 'lucide-react';
+import React from "react";
+import { useGameStore } from "../store/gameStore";
+import { cn } from "../utils/cn";
+import { useTranslation } from "react-i18next";
+import { ArrowDown } from "lucide-react";
 
 export function PlaceSevenButton() {
-    const { t } = useTranslation();
-    const { 
-        phase,
-        hasPlayedAction,
-        columns,
-        currentPlayer
-    } = useGameStore();
+  const { t } = useTranslation();
+  const { phase, hasPlayedAction, columns, currentPlayer } = useGameStore();
 
-    // Accès aux cartes du joueur
-    const playerHand = currentPlayer.hand;
-    const playerReserve = currentPlayer.reserve;
-    
-    // Vérifie si toutes les conditions sont remplies pour afficher le bouton
-    const canPlaceSeven = () => {
-        // Vérification de base : phase d'action et aucune action jouée
-        if (phase !== 'action' || hasPlayedAction) return false;
+  // Accès aux cartes du joueur
+  const playerHand = currentPlayer.hand;
+  const playerReserve = currentPlayer.reserve;
 
-        // Cherche une colonne avec soit une reserveSuit contenant un 7, soit une sixième carte présente
-        return Object.entries(columns).some(([suit, column]) => {
-            // Vérifie que la sixième carte est présente
-            const isSixthCardPresent = column.cards.length >= 6;
-            if (!isSixthCardPresent) return false;
+  // Vérifie si toutes les conditions sont remplies pour afficher le bouton
+  const canPlaceSeven = () => {
+    // Vérification de base : phase d'action et aucune action jouée
+    if (phase !== "PLAY" || hasPlayedAction) return false;
 
-            // Vérifie si un 7 de la bonne couleur est disponible
-            const isSevenInReserveSuit = column.reserveSuit?.value === '7' && column.reserveSuit?.suit === suit;
-            const isSevenInHandOrReserve = 
-                playerHand.some(card => card.value === '7' && card.suit === suit) ||
-                playerReserve.some(card => card.value === '7' && card.suit === suit);
+    // Cherche une colonne avec soit une reserveSuit contenant un 7, soit une sixième carte présente
+    return Object.entries(columns).some(([suit, column]) => {
+      // Vérifie que la sixième carte est présente
+      const isSixthCardPresent = column.cards.length >= 6;
+      if (!isSixthCardPresent) return false;
 
-            return isSevenInHandOrReserve || isSevenInReserveSuit;
-        });
-    };
+      // Vérifie si un 7 de la bonne couleur est disponible
+      const isSevenInReserveSuit = column.reserveSuit?.value === "7" && column.reserveSuit?.suit === suit;
+      const isSevenInHandOrReserve =
+        playerHand.some((card) => card.value === "7" && card.suit === suit) ||
+        playerReserve.some((card) => card.value === "7" && card.suit === suit);
 
-    // Gère le clic sur le bouton
-    const handlePlaceSeven = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Empêche la propagation du clic
-        if (!canPlaceSeven()) return;
+      return isSevenInHandOrReserve || isSevenInReserveSuit;
+    });
+  };
 
-        // Trouve la colonne appropriée pour placer le 7
-        const suitEntry = Object.entries(columns).find(([suit, column]) => {
-            const isSixthCardPresent = column.cards.length >= 6;
-            if (!isSixthCardPresent) return false;
+  // Gère le clic sur le bouton
+  const handlePlaceSeven = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêche la propagation du clic
+    if (!canPlaceSeven()) return;
 
-            // Vérifie si un 7 de la bonne couleur est disponible
-            const isSevenInReserveSuit = column.reserveSuit?.value === '7' && column.reserveSuit?.suit === suit;
-            const isSevenInHandOrReserve = 
-                playerHand.some(card => card.value === '7' && card.suit === suit) ||
-                playerReserve.some(card => card.value === '7' && card.suit === suit);
+    // Trouve la colonne appropriée pour placer le 7
+    const suitEntry = Object.entries(columns).find(([suit, column]) => {
+      const isSixthCardPresent = column.cards.length >= 6;
+      if (!isSixthCardPresent) return false;
 
-            return isSevenInHandOrReserve || isSevenInReserveSuit;
-        });
+      // Vérifie si un 7 de la bonne couleur est disponible
+      const isSevenInReserveSuit = column.reserveSuit?.value === "7" && column.reserveSuit?.suit === suit;
+      const isSevenInHandOrReserve =
+        playerHand.some((card) => card.value === "7" && card.suit === suit) ||
+        playerReserve.some((card) => card.value === "7" && card.suit === suit);
 
-        if (suitEntry) {
-            const [suit, _] = suitEntry;
-            // Place le 7 dans la colonne correspondante
-            useGameStore.getState().handleCardPlace(suit as any, 6);
-        }
-    };
+      return isSevenInHandOrReserve || isSevenInReserveSuit;
+    });
 
-    // Vérifie si le bouton peut être activé
-    const isEnabled = canPlaceSeven();
+    if (suitEntry) {
+      const [suit, _] = suitEntry;
+      // Place le 7 dans la colonne correspondante
+      useGameStore.getState().handleCardPlace(suit as any, 6);
+    }
+  };
 
-    return (
-        <button
-            onClick={handlePlaceSeven}
-            disabled={!isEnabled}
-            className={cn(
-                "flex items-center gap-1 px-2 py-1 text-sm rounded",
-                "transition-colors duration-200",
-                isEnabled
-                    ? "text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900"
-                    : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
-            )}
-        >
-            <ArrowDown className="w-4 h-4" />
-            <span>{t('game.actions.placeSeven')}</span>
-        </button>
-    );
+  // Vérifie si le bouton peut être activé
+  const isEnabled = canPlaceSeven();
+
+  return (
+    <button
+      onClick={handlePlaceSeven}
+      disabled={!isEnabled}
+      className={cn(
+        "flex items-center gap-1 px-2 py-1 text-sm rounded",
+        "transition-colors duration-200",
+        isEnabled
+          ? "text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900"
+          : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
+      )}>
+      <ArrowDown className="w-4 h-4" />
+      <span>{t("game.actions.placeSeven")}</span>
+    </button>
+  );
 }
 
 export default PlaceSevenButton;

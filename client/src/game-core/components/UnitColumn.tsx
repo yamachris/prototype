@@ -35,7 +35,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
   // Vérifier si la colonne a une séquence complète
   const hasCompleteSequence = () => {
     const hasSevenCards = column.cards.length === 7;
-    const canBlock = phase === "action" && !hasPlayedAction;
+    const canBlock = phase === "PLAY" && !hasPlayedAction;
 
     console.log("Debug hasCompleteSequence:", {
       suit,
@@ -52,13 +52,13 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
   // Convertir la suite en index
   const suitToIndex = (suit: Suit): number => {
     switch (suit) {
-      case "hearts":
+      case "HEARTS":
         return 0;
-      case "diamonds":
+      case "DIAMONDS":
         return 1;
-      case "clubs":
+      case "CLUBS":
         return 2;
-      case "spades":
+      case "SPADES":
         return 3;
       default:
         return -1;
@@ -68,7 +68,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
   const getSuitIcon = () => {
     const iconClass = cn(
       "w-5 h-5",
-      suit === "hearts" || suit === "diamonds" ? "text-red-500" : "text-gray-700 dark:text-gray-100"
+      suit === "HEARTS" || suit === "DIAMONDS" ? "text-red-500" : "text-gray-700 dark:text-gray-100"
     );
 
     return (
@@ -76,13 +76,13 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
         {/* Icône de la suite */}
         {(() => {
           switch (suit) {
-            case "hearts":
+            case "HEARTS":
               return <Heart className={iconClass} />;
-            case "diamonds":
+            case "DIAMONDS":
               return <Diamond className={iconClass} />;
-            case "clubs":
+            case "CLUBS":
               return <Club className={iconClass} />;
-            case "spades":
+            case "SPADES":
               return <Spade className={iconClass} />;
           }
         })()}
@@ -94,13 +94,13 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
               <span
                 className={cn(
                   "text-sm font-bold",
-                  column.reserveSuit.type === "joker"
+                  column.reserveSuit.type === "JOKER"
                     ? column.reserveSuit.color === "red"
                       ? "text-red-500"
                       : "text-gray-700 dark:text-gray-300"
                     : "text-yellow-500 dark:text-yellow-400"
                 )}>
-                {column.reserveSuit.type === "joker" ? "J" : "7"}
+                {column.reserveSuit.type === "JOKER" ? "J" : "7"}
               </span>
 
               {/* Enseigne pour le 7 */}
@@ -110,17 +110,17 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
                     "text-sm",
                     column.reserveSuit.color === "red" ? "text-red-500" : "text-gray-700 dark:text-gray-300"
                   )}>
-                  {column.reserveSuit.suit === "hearts" && "♥️"}
-                  {column.reserveSuit.suit === "diamonds" && "♦️"}
-                  {column.reserveSuit.suit === "clubs" && "♣️"}
-                  {column.reserveSuit.suit === "spades" && "♠️"}
+                  {column.reserveSuit.suit === "HEARTS" && "♥️"}
+                  {column.reserveSuit.suit === "DIAMONDS" && "♦️"}
+                  {column.reserveSuit.suit === "CLUBS" && "♣️"}
+                  {column.reserveSuit.suit === "SPADES" && "♠️"}
                 </span>
               )}
             </div>
 
             {/* Boutons d'action */}
             <div className="flex items-center gap-1">
-              {(column.reserveSuit?.type === "joker" || column.reserveSuit?.value === "7") && column.cards[5] ? (
+              {(column.reserveSuit?.type === "JOKER" || column.reserveSuit?.value === "7") && column.cards[5] ? (
                 <PlaceSevenButton />
               ) : !column.reserveSuit.value || column.reserveSuit.value !== "7" || !column.cards[5] ? (
                 <CardExchangeButton activatorCard={column.reserveSuit} currentSuit={suit} />
@@ -212,13 +212,6 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
   // });
 
   const handleClick = () => {
-    console.log("Column clicked:", {
-      suit,
-      isActive,
-      hasLuckyCard: column.hasLuckyCard,
-      reserveSuit: column.reserveSuit,
-    });
-
     if (isActive) {
       onCardPlace();
     }
@@ -241,7 +234,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
       <div className="flex justify-between items-center px-4 py-2.5">
         <div className="flex items-center gap-4">
           {getSuitIcon()}
-          {column.cards.length >= 7 && phase === "action" && !hasPlayedAction && (
+          {column.cards.length >= 7 && phase === "PLAY" && !hasPlayedAction && (
             <BlockButton columnIndex={suitToIndex(suit)} />
           )}
         </div>

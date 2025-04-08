@@ -39,9 +39,9 @@ export function PlayerHand({
     const targetId = event.over?.id;
     if (!targetId) return;
 
-    if (targetId === 'reserve' && currentPhase === 'action') {
+    if (targetId === 'reserve' && currentPhase === 'PLAY') {
       onMoveToReserve(card);
-    } else if (targetId === 'discard' && currentPhase === 'discard') {
+    } else if (targetId === 'DISCARD' && currentPhase === 'DISCARD') {
       onDiscard(card);
     }
   };
@@ -54,7 +54,7 @@ export function PlayerHand({
             <DroppableZone
               id="hand"
               className="flex gap-4"
-              acceptCards={currentPhase === 'action'}
+              acceptCards={currentPhase === 'PLAY'}
             >
               <div className="flex gap-4">
                 {cards.map((card) => (
@@ -74,13 +74,13 @@ export function PlayerHand({
 
             <div className="flex items-center gap-6">
               <DroppableZone
-                id="discard"
+                id="DISCARD"
                 className={`w-16 h-24 border-2 border-dashed rounded-lg flex items-center justify-center ${
-                  currentPhase === 'discard'
+                  currentPhase === 'DISCARD'
                     ? 'border-red-300 bg-red-50 hover:bg-red-100'
                     : 'border-gray-300'
                 } transition-colors duration-200`}
-                acceptCards={currentPhase === 'discard'}
+                acceptCards={currentPhase === 'DISCARD'}
               >
                 <span className="text-sm text-gray-500 text-center px-2">
                   Défausser
@@ -90,10 +90,10 @@ export function PlayerHand({
               <DroppableZone
                 id="reserve"
                 className={`w-16 h-24 border-2 border-dashed rounded-lg flex items-center justify-center ${
-                  currentPhase === 'action'
+                  currentPhase === 'PLAY'
                     ? 'border-blue-300 bg-blue-50 hover:bg-blue-100'
 
-              {currentPhase === 'action' ? (
+              {currentPhase === 'PLAY' ? (
                 <button
                   onClick={onPassTurn}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"

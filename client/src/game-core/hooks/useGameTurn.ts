@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Card, Phase, Player } from '../types/game';
-import { drawCards } from '../utils/deck';
+import { useState, useEffect } from "react";
+import { Card, Phase, Player } from "../types/game";
+import { drawCards } from "../utils/deck";
 
 export function useGameTurn() {
-  const [phase, setPhase] = useState<Phase>('discard');
+  const [phase, setPhase] = useState<Phase>("DISCARD");
   const [timeLeft, setTimeLeft] = useState(30);
   const [turn, setTurn] = useState(1);
 
   useEffect(() => {
-    if (phase === 'setup') return;
+    if (phase === "setup") return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 0) {
           handlePassPhase();
           return 30;
@@ -24,35 +24,39 @@ export function useGameTurn() {
   }, [phase]);
 
   const handleDiscard = (player: Player, card: Card, deck: Card[]) => {
-    if (phase !== 'discard') return null;
+    if (phase !== "DISCARD") return null;
 
     const [newDeck, [drawnCard]] = drawCards(deck, 1);
-    
+
     return {
       updatedPlayer: {
         ...player,
-        hand: [...player.hand.filter(c => c.id !== card.id), drawnCard],
-        discardPile: [...player.discardPile, card]
+        hand: [...player.hand.filter((c) => c.id !== card.id), drawnCard],
+        discardPile: [...player.discardPile, card],
       },
-      newDeck
+      newDeck,
     };
   };
 
   const handlePassPhase = () => {
-    setPhase(prev => {
+    setPhase((prev) => {
       switch (prev) {
-        case 'discard': return 'draw';
-        case 'draw': return 'action';
-        case 'action': return 'discard';
-        default: return prev;
+        case "DISCARD":
+          return "DISCARD";
+        case "DRAW":
+          return "PLAY";
+        case "PLAY":
+          return "DISCARD";
+        default:
+          return prev;
       }
     });
     setTimeLeft(30);
   };
 
   const handlePassTurn = () => {
-    setTurn(prev => prev + 1);
-    setPhase('discard');
+    setTurn((prev) => prev + 1);
+    setPhase("DISCARD");
     setTimeLeft(30);
   };
 
@@ -62,6 +66,6 @@ export function useGameTurn() {
     turn,
     handleDiscard,
     handlePassPhase,
-    handlePassTurn
+    handlePassTurn,
   };
 }

@@ -25,11 +25,11 @@ export function CardExchangeButton({ activatorCard, currentSuit }: CardExchangeB
   // Vérifier si le joueur a un 7 ou un Joker dans sa main/réserve
   const hasValidCard = [...currentPlayer.hand, ...currentPlayer.reserve].some(
     (card) =>
-      (card.type === "joker" || card.value === "7") && (activatorCard.type === "joker" || activatorCard.value === "7")
+      (card.type === "JOKER" || card.value === "7") && (activatorCard.type === "JOKER" || activatorCard.value === "7")
   );
 
   //Est ce qu'un joker est utilisé dans la colonne ?
-  const isJokerUsedCard = columns[currentSuit].cards.find((card) => card.type === "joker");
+  const isJokerUsedCard = columns[currentSuit].cards.find((card) => card.type === "JOKER");
 
   //a la place de quelle carte
   let jokerIndex = -1;
@@ -39,12 +39,12 @@ export function CardExchangeButton({ activatorCard, currentSuit }: CardExchangeB
   if (!hasValidCard && !isJokerUsedCard) return null;
 
   // Vérifier si une carte valide est sélectionnée
-  const isActivatorSelected = selectedCards.find((card) => card.type === "joker" || card.value === "7");
+  const isActivatorSelected = selectedCards.find((card) => card.type === "JOKER" || card.value === "7");
 
   const isValidJokerRemplacementCardSelected = selectedCards.find((card) => card.value === (jokerIndex + 1).toString());
 
   const canExchange =
-    phase === "action" && !hasPlayedAction && (isActivatorSelected || isValidJokerRemplacementCardSelected);
+    phase === "PLAY" && !hasPlayedAction && (isActivatorSelected || isValidJokerRemplacementCardSelected);
 
   const handleExchangeClick = (e: React.MouseEvent) => {
     e.stopPropagation();

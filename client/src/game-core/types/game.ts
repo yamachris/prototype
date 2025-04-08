@@ -1,5 +1,5 @@
-export type Phase = "setup" | "discard" | "draw" | "action";
-export type Suit = "hearts" | "diamonds" | "clubs" | "spades" | "special";
+export type Phase = "SETUP" | "DISCARD" | "DRAW" | "PLAY" | "END";
+export type Suit = "HEARTS" | "DIAMONDS" | "CLUBS" | "SPADES" | "SPECIAL";
 export type StandardValue = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K";
 export type Value = StandardValue | "JOKER";
 export type ActivatorType = "7" | "JOKER" | null;
@@ -31,7 +31,7 @@ export type Card = {
   id: string;
   suit: Suit;
   value: Value;
-  type: "standard" | "joker";
+  type: "standard" | "JOKER";
   color: CardColor;
   isRedJoker?: boolean;
   state?: ValetCardState; // État du Valet (uniquement pour les cartes J)
@@ -54,6 +54,7 @@ export interface SacrificeActions {
 }
 
 export interface GameState extends SacrificeState {
+  gameId: string;
   currentPlayer: Player;
   phase: Phase;
   isPlayerTurn: boolean;
@@ -84,7 +85,6 @@ export interface GameStore extends GameState {
   setAttackMode: (mode: boolean) => void;
   setMessage: (message: string) => void;
   handleStrategicShuffle: () => void;
-  endTurn: () => void;
   setPhase: (phase: Phase) => void;
   canUseStrategicShuffle: () => boolean;
   handlePassTurn: () => void;

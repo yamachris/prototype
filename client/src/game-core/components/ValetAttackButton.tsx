@@ -43,10 +43,10 @@ export function ValetAttackButton({ valetCard, columnSuit }: ValetAttackButtonPr
 
   // Vérifie si le Valet peut attaquer ce tour-ci
   // const canAttackNow =
-  //   phase === "action" &&
+  //   phase === "PLAY" &&
   //   !hasPlayedAction &&
   //   // Peut attaquer immédiatement si activé avec JOKER ou sacrifice
-  //   (valet.activatedBy === "joker" ||
+  //   (valet.activatedBy === "JOKER" ||
   //     valet.activatedBy === "sacrifice" ||
   //     // Peut attaquer si activé avec 7 et au tour suivant
   //     (valet.activatedBy === "seven" && valet.canAttackNextTurn) ||
@@ -55,7 +55,7 @@ export function ValetAttackButton({ valetCard, columnSuit }: ValetAttackButtonPr
 
   const canAttackNow =
     // Peut attaquer immédiatement si activé avec JOKER ou sacrifice
-    valet.activatedBy === "joker" ||
+    valet.activatedBy === "JOKER" ||
     valet.activatedBy === "sacrifice" ||
     // Peut attaquer si activé avec 7 et au tour suivant
     (valet.activatedBy === "seven" && valet.canAttackNextTurn) ||

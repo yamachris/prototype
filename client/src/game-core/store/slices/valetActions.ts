@@ -1,5 +1,5 @@
-import { Card, GameState, Suit } from '../../types/game';
-import { cn } from '../../utils/cn';
+import { Card, GameState, Suit } from "../../types/game";
+import { cn } from "../../utils/cn";
 
 // Types pour le Valet
 interface ValetAttackButton {
@@ -21,42 +21,39 @@ export const valetAttackButtons: ValetAttackButton[] = [
 // Vérifie si le Valet peut être battu
 export function canValetBeDefeated(attackingCard: Card, defendingValet: Card): boolean {
   // Le Valet peut être battu par un 8 ou 9 de la même enseigne, ou un Joker
-  if (attackingCard.type === 'joker') return true;
-  
-  return attackingCard.suit === defendingValet.suit && 
-         ['8', '9'].includes(attackingCard.value);
+  if (attackingCard.type === "JOKER") return true;
+
+  return attackingCard.suit === defendingValet.suit && ["8", "9"].includes(attackingCard.value);
 }
 
 // Gère l'attaque du Valet
 export function handleValetAttack(
-  gameState: GameState, 
-  valet: Card, 
-  targetCards: Card[] = [], 
+  gameState: GameState,
+  valet: Card,
+  targetCards: Card[] = [],
   columnSuit: Suit
 ): GameState {
   if (!targetCards || targetCards.length === 0) {
     return {
       ...gameState,
-      message: "Aucune carte à attaquer dans cette colonne"
+      message: "Aucune carte à attaquer dans cette colonne",
     };
   }
 
   // Vérifie si la cible est valide (carte ≤ 6)
-  const cardsToDestroy = targetCards.filter(card => 
-    ['A', '2', '3', '4', '5', '6'].includes(card.value)
-  );
+  const cardsToDestroy = targetCards.filter((card) => ["A", "2", "3", "4", "5", "6"].includes(card.value));
 
   if (cardsToDestroy.length === 0) {
     return {
       ...gameState,
-      message: "Le Valet ne peut attaquer que les cartes de valeur 6 ou moins!"
+      message: "Le Valet ne peut attaquer que les cartes de valeur 6 ou moins!",
     };
   }
 
   // Copie l'état du jeu pour les modifications
   const updatedColumns = { ...gameState.columns };
   const updatedPlayer = { ...gameState.currentPlayer };
-  
+
   // Vérifie si la colonne existe
   if (!updatedColumns[columnSuit]) {
     updatedColumns[columnSuit] = {
@@ -64,15 +61,13 @@ export function handleValetAttack(
       faceCards: {},
       attackStatus: {
         lastAttackCard: null,
-        attackButtons: []
-      }
+        attackButtons: [],
+      },
     };
   }
 
   // Retire les cartes ciblées de la colonne
-  updatedColumns[columnSuit].cards = targetCards.filter(
-    card => !cardsToDestroy.includes(card)
-  );
+  updatedColumns[columnSuit].cards = targetCards.filter((card) => !cardsToDestroy.includes(card));
 
   // Ajoute les cartes détruites à la défausse du joueur
   updatedPlayer.discardPile = [...updatedPlayer.discardPile, ...cardsToDestroy];
@@ -82,16 +77,11 @@ export function handleValetAttack(
     ...gameState,
     columns: updatedColumns,
     currentPlayer: updatedPlayer,
-    message: `Le Valet a détruit ${cardsToDestroy.length} cartes de la colonne ${columnSuit}!`
+    message: `Le Valet a détruit ${cardsToDestroy.length} cartes de la colonne ${columnSuit}!`,
   };
 }
 
 // Style pour les boutons d'attaque dorés du Valet
 export function getValetAttackButtonStyle(isActive: boolean): string {
-  return cn(
-    "w-5 h-5 pl-50",
-    isActive 
-      ? "text-yellow-500 animate-pulse" 
-      : "text-gray-400"
-  );
+  return cn("w-5 h-5 pl-50", isActive ? "text-yellow-500 animate-pulse" : "text-gray-400");
 }

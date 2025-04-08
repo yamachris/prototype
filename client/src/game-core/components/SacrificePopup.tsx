@@ -104,10 +104,10 @@ export const SacrificePopup: React.FC = () => {
 
   const getCardName = (card: Card): string => {
     const suitNames: Record<string, string> = {
-      hearts: "♥️ Cœur",
-      diamonds: "♦️ Carreau",
-      clubs: "♣️ Trèfle",
-      spades: "♠️ Pique",
+      HEARTS: "♥️ Cœur",
+      DIAMONDS: "♦️ Carreau",
+      CLUBS: "♣️ Trèfle",
+      SPADES: "♠️ Pique",
     };
 
     const valueNames: Record<string, string> = {
@@ -134,14 +134,14 @@ export const SacrificePopup: React.FC = () => {
   };
 
   const getSuitSymbol = (suit: string) => {
-    switch (suit.toLowerCase()) {
-      case "hearts":
+    switch (suit.toUpperCase()) {
+      case "HEARTS":
         return "♥";
-      case "diamonds":
+      case "DIAMONDS":
         return "♦";
-      case "clubs":
+      case "CLUBS":
         return "♣";
-      case "spades":
+      case "SPADES":
         return "♠";
       default:
         return "";
@@ -150,15 +150,15 @@ export const SacrificePopup: React.FC = () => {
 
   const groupCardsBySuit = () => {
     const grouped = {
-      hearts: [] as Card[],
-      diamonds: [] as Card[],
-      clubs: [] as Card[],
-      spades: [] as Card[],
+      HEARTS: [] as Card[],
+      DIAMONDS: [] as Card[],
+      CLUBS: [] as Card[],
+      SPADES: [] as Card[],
     };
 
     availableCards.forEach((card) => {
-      if (grouped[card.suit.toLowerCase() as keyof typeof grouped])
-        grouped[card.suit.toLowerCase() as keyof typeof grouped].push(card);
+      if (grouped[card.suit.toUpperCase() as keyof typeof grouped])
+        grouped[card.suit.toUpperCase() as keyof typeof grouped].push(card);
     });
 
     return grouped;

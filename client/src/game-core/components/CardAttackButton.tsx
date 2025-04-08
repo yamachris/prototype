@@ -29,10 +29,10 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
   // console.log(column);
 
   useEffect(() => {
-    console.log("---------isAttackButtonActive ", isAttackButtonActive);
+    // console.log("---------isAttackButtonActive ", isAttackButtonActive);
 
     if (attackCard.value == "J") {
-      if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "joker") {
+      if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "JOKER") {
         if (!localState.canAttackNow) {
           setLocalState({ ...localState, currentTurn: turn, canAttackNow: true });
           return;
@@ -56,10 +56,10 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
     handleAttack(attackCard);
   };
 
-  var isEnabled = phase == "action" && !hasPlayedAction;
+  var isEnabled = phase == "PLAY" && !hasPlayedAction;
 
   if (!hasDoneOnce && attackCard.value == "J") {
-    if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "joker") {
+    if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "JOKER") {
       isEnabled = true;
     }
   }

@@ -1,16 +1,19 @@
-import React from 'react';
-import { Heart, Clock } from 'lucide-react';
-import { useGameStore } from '../store/gameStore';
-import { useGameTimer } from '../hooks/useGameTimer';
-import { ProfileEditor } from './ProfileEditor';
-import { cn } from '../utils/cn';
-import { ECG } from './ECG';
+import React from "react";
+import { Heart, Clock } from "lucide-react";
+// import { useGameStore } from "../store/gameStore";
+import { useGameStore } from "../store/gameStore";
+
+import { useGameTimer } from "../hooks/useGameTimer";
+import { ProfileEditor } from "./ProfileEditor";
+import { cn } from "../utils/cn";
+import { ECG } from "./ECG";
 
 export function Header() {
   const { currentPlayer } = useGameStore();
+
   const { formattedTotalTime } = useGameTimer();
   const healthPercentage = (currentPlayer.health / currentPlayer.maxHealth) * 100;
-  const healthColor = healthPercentage > 50 ? 'text-red-500' : 'text-red-300';
+  const healthColor = healthPercentage > 50 ? "text-red-500" : "text-red-300";
 
   return (
     <div className="space-y-4">
@@ -32,7 +35,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             {/* ECG and Heart */}
             <div className="flex items-center gap-2">
-              <ECG color={healthPercentage > 50 ? '#ef4444' : '#fca5a5'} />
+              <ECG color={healthPercentage > 50 ? "#ef4444" : "#fca5a5"} />
               <Heart className={cn("w-4 h-4 animate-heartbeat", healthColor)} />
             </div>
 
@@ -42,10 +45,10 @@ export function Header() {
                 {currentPlayer.health}/{currentPlayer.maxHealth}
               </span>
               <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div 
+                <div
                   className={cn(
                     "h-full transition-all duration-300",
-                    healthPercentage > 50 ? 'bg-red-500' : 'bg-red-300'
+                    healthPercentage > 50 ? "bg-red-500" : "bg-red-300"
                   )}
                   style={{ width: `${healthPercentage}%` }}
                 />

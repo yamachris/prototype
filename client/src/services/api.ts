@@ -1,11 +1,11 @@
-import axios from 'axios';
-import { Card, Suit, GameState } from '../game-core/types/game';
+import axios from "axios";
+import { Card, Suit, GameState } from "../game-core/types/game";
 
-const API_URL = 'http://localhost:3007';
+const API_URL = "http://localhost:3007";
 
 export const gameApi = {
-  createGame: async (): Promise<string> => {
-    const response = await axios.post(`${API_URL}/game/create`);
+  createGame: async (mode: string): Promise<string> => {
+    const response = await axios.post(`${API_URL}/game/create`, { mode });
     return response.data.gameId;
   },
 

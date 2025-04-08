@@ -26,7 +26,7 @@ interface GameState {
   isPlayerTurn: boolean;
   queenChallenge: {
     isActive: boolean;
-    queen: Card | null;
+    queen: typeof Card | null;
   };
 }
 
@@ -39,7 +39,6 @@ interface GameStore extends GameState {
   setAttackMode: (mode: boolean) => void;
   setMessage: (message: string) => void;
   handleStrategicShuffle: () => void;
-  endTurn: () => void;
   setPhase: (phase: Phase) => void;
   canUseStrategicShuffle: () => boolean;
   confirmStrategicShuffle: () => void;
@@ -68,7 +67,6 @@ export function PlayerArea() {
     handleQueenChallenge,
     setMessage,
     handleStrategicShuffle: storeHandleStrategicShuffle,
-    endTurn,
   } = useGameStore();
 
   const [showPopup, setShowPopup] = useState(false);
@@ -82,7 +80,7 @@ export function PlayerArea() {
 
   // const isJokerUsedCard = columns.map((column) => {});
 
-  // [suit].cards.find((card) => card.type === "joker");
+  // [suit].cards.find((card) => card.type === "JOKER");
 
   // {isJokerUsedCard && <JokerExchangeButton jokerUsedCard={isJokerUsedCard} currentSuit={suit} />}
 
@@ -108,11 +106,11 @@ export function PlayerArea() {
   } | null>(null);
 
   const totalCards = currentPlayer.hand.length + currentPlayer.reserve.length;
-  const canDiscard = phase === "discard" && !hasDiscarded;
-  const canDraw = phase === "draw" && totalCards < 7;
+  const canDiscard = phase === "DISCARD" && !hasDiscarded;
+  const canDraw = phase === "DRAW" && totalCards < 7;
 
   const handleCardClick = (card: CardType, from: "hand" | "reserve") => {
-    if (card.type === "joker" && isPlayerTurn && phase === "action") {
+    if (card.type === "JOKER" && isPlayerTurn && phase === "PLAY") {
       selectCard(card);
       return;
     }
@@ -133,7 +131,7 @@ export function PlayerArea() {
       return;
     }
 
-    if (phase === "discard" && canDiscard) {
+    if (phase === "DISCARD" && canDiscard) {
       handleDiscard(card);
       return;
     }
@@ -148,7 +146,7 @@ export function PlayerArea() {
 
   const handleJokerActionClick = (action: "heal" | "attack") => {
     const selectedJoker = selectedCards[0];
-    if (selectedJoker?.type === "joker") {
+    if (selectedJoker?.type === "JOKER") {
       handleJokerAction(selectedJoker, action);
     }
   };
@@ -156,7 +154,7 @@ export function PlayerArea() {
   const { t } = useTranslation();
 
   const [showQueenChallenge, setShowQueenChallenge] = useState(false);
-  const [challengeQueen, setChallengeQueen] = useState<Card | null>(null);
+  const [challengeQueen, setChallengeQueen] = useState<typeof Card | null>(null);
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 h-36 transition-colors duration-300">
@@ -213,10 +211,10 @@ export function PlayerArea() {
                       selectedCards[0].value === "J") && (
                       <button
                         onClick={() => useGameStore.getState().setSacrificeMode(true)}
-                        disabled={hasPlayedAction || phase !== "action"}
+                        disabled={hasPlayedAction || phase !== "PLAY"}
                         className={cn(
                           "flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors",
-                          !hasPlayedAction && phase === "action"
+                          !hasPlayedAction && phase === "PLAY"
                             ? "bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/70 text-red-600 dark:text-red-400"
                             : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50",
                           "ring-1 ring-red-400/50 hover:ring-red-500"
@@ -245,7 +243,7 @@ export function PlayerArea() {
                           setSelectedForExchange(null);
                           setExchangeMode(false);
                         }
-                      } else if (phase === "discard") {
+                      } else if (phase === "DISCARD") {
                         handleDiscard(card);
                       } else {
                         selectCard(card);
@@ -253,7 +251,7 @@ export function PlayerArea() {
                     }}
                     onJokerAction={(action) => handleJokerAction(card, action)}
                     onQueenActivate={() => {
-                      const activator = selectedCards.find((c) => c.type === "joker" || c.value === "7");
+                      const activator = selectedCards.find((c) => c.type === "JOKER" || c.value === "7");
                       if (activator) {
                         handleCardPlace(card.suit, 0);
                       }
@@ -294,7 +292,7 @@ export function PlayerArea() {
                           setSelectedForExchange(null);
                           setExchangeMode(false);
                         }
-                      } else if (phase === "discard") {
+                      } else if (phase === "DISCARD") {
                         handleDiscard(card);
                       } else {
                         selectCard(card);
@@ -302,7 +300,7 @@ export function PlayerArea() {
                     }}
                     onJokerAction={(action) => handleJokerAction(card, action)}
                     onQueenActivate={() => {
-                      const activator = selectedCards.find((c) => c.type === "joker" || c.value === "7");
+                      const activator = selectedCards.find((c) => c.type === "JOKER" || c.value === "7");
                       if (activator) {
                         handleCardPlace(card.suit, 0);
                       }

@@ -1,23 +1,21 @@
-import React from 'react';
-import { Card } from './Card';
-import { useGameStore } from '../store/gameStore';
-import { cn } from '../utils/cn';
-import { useTranslation } from 'react-i18next';
-import { MusicToggle } from './MusicToggle';
+import React from "react";
+import { Card } from "./Card";
+import { Card as CardType } from "../types/game";
+import { useGameStore } from "../store/gameStore";
+import { cn } from "../utils/cn";
+import { useTranslation } from "react-i18next";
+
+import { MusicToggle } from "./MusicToggle";
 
 export function SetupPhase() {
-  const { 
-    currentPlayer, 
-    moveToReserve,
-    startGame
-  } = useGameStore();
-
   const { t } = useTranslation();
+
+  const { currentPlayer, moveToReserve, startGame } = useGameStore();
 
   const isReserveComplete = currentPlayer.reserve.length === 2;
   const canStartGame = isReserveComplete;
 
-  const handleMoveToReserve = (card: Card) => {
+  const handleMoveToReserve = (card: CardType) => {
     if (!isReserveComplete) {
       moveToReserve(card);
     }
@@ -30,43 +28,36 @@ export function SetupPhase() {
       </div>
       <div className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-4xl w-full mx-4 shadow-2xl">
         <h2 className="text-2xl font-bold mb-2 text-center text-gray-900 dark:text-gray-100">
-          {t('game.setup.title')}
+          {t("game.setup.title")}
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-center mb-8">
-          {t('game.setup.welcome')}
-        </p>
+        <p className="text-gray-600 dark:text-gray-400 text-center mb-8">{t("game.setup.welcome")}</p>
 
         <div className="space-y-8">
           {/* Zone de réserve */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('game.setup.reserve')}</h3>
-              <span className={cn(
-                "px-3 py-1 rounded-full text-sm font-medium",
-                isReserveComplete 
-                  ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200" 
-                  : "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
-              )}>
-                {currentPlayer.reserve.length}/2 {t('game.setup.handCount')}
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("game.setup.reserve")}</h3>
+              <span
+                className={cn(
+                  "px-3 py-1 rounded-full text-sm font-medium",
+                  isReserveComplete
+                    ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                    : "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                )}>
+                {currentPlayer.reserve.length}/2 {t("game.setup.handCount")}
               </span>
             </div>
 
             <div className="flex gap-8 justify-center min-h-[200px] p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl">
               {currentPlayer.reserve.map((card) => (
-                <Card
-                  key={card.id}
-                  card={card}
-                  size="lg"
-                  isDisabled
-                />
+                <Card key={card.id} card={card} size="lg" isDisabled />
               ))}
               {Array.from({ length: 2 - currentPlayer.reserve.length }).map((_, i) => (
                 <div
                   key={`empty-${i}`}
-                  className="w-24 h-36 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-xl flex items-center justify-center bg-white/50 dark:bg-gray-800/50"
-                >
+                  className="w-24 h-36 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-xl flex items-center justify-center bg-white/50 dark:bg-gray-800/50">
                   <span className="text-blue-400 dark:text-blue-500 text-center px-4">
-                    {t('game.cards.slot')} {currentPlayer.reserve.length + i + 1}
+                    {t("game.cards.slot")} {currentPlayer.reserve.length + i + 1}
                   </span>
                 </div>
               ))}
@@ -76,9 +67,9 @@ export function SetupPhase() {
           {/* Main du joueur */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('game.setup.yourHand')}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("game.setup.yourHand")}</h3>
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
-                {currentPlayer.hand.length} {t('game.setup.handCount')}
+                {currentPlayer.hand.length} {t("game.setup.handCount")}
               </span>
             </div>
 
@@ -102,20 +93,16 @@ export function SetupPhase() {
 
         {/* Bouton de démarrage */}
         <div className="mt-8 text-center">
-          <button 
+          <button
             onClick={startGame}
             disabled={!canStartGame}
             className={cn(
               "px-6 py-3 rounded-lg font-medium shadow-sm transition-all duration-300",
               canStartGame
-                ? "bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600 hover:scale-105" 
+                ? "bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600 hover:scale-105"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-            )}
-          >
-            {canStartGame 
-              ? t('game.setup.startGame')
-              : t('game.setup.selectCards')
-            }
+            )}>
+            {canStartGame ? t("game.setup.startGame") : t("game.setup.selectCards")}
           </button>
         </div>
       </div>

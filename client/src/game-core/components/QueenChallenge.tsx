@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Card, Suit } from '../types/game';
-import { cn } from '../utils/cn';
+import React, { useState } from "react";
+import { Card, Suit } from "../types/game";
+import { cn } from "../utils/cn";
 
 interface QueenChallengeProps {
   queen: Card;
@@ -11,11 +11,11 @@ export function QueenChallenge({ queen, onGuess }: QueenChallengeProps) {
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
 
   // Les 4 dames face visible
-  const queens: { suit: Suit; color: 'red' | 'black' }[] = [
-    { suit: 'hearts', color: 'red' },
-    { suit: 'diamonds', color: 'red' },
-    { suit: 'clubs', color: 'black' },
-    { suit: 'spades', color: 'black' }
+  const queens: { suit: Suit; color: "red" | "black" }[] = [
+    { suit: "HEARTS", color: "red" },
+    { suit: "DIAMONDS", color: "red" },
+    { suit: "CLUBS", color: "black" },
+    { suit: "SPADES", color: "black" },
   ];
 
   const handleCardClick = (index: number) => {
@@ -42,7 +42,7 @@ export function QueenChallenge({ queen, onGuess }: QueenChallengeProps) {
               className={cn(
                 "w-32 h-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border-2",
                 "transition-all duration-300 transform",
-                queen.color === 'red' ? "border-red-300" : "border-gray-300",
+                queen.color === "red" ? "border-red-300" : "border-gray-300",
                 selectedCard === null && "hover:scale-105 hover:-translate-y-2",
                 selectedCard === index && "ring-4 ring-yellow-400 scale-105",
                 selectedCard !== null && selectedCard !== index && "opacity-50 scale-95",
@@ -51,21 +51,25 @@ export function QueenChallenge({ queen, onGuess }: QueenChallengeProps) {
               )}
               style={{
                 animationDelay: `${index * 100}ms`,
-                animationFillMode: 'both'
-              }}
-            >
+                animationFillMode: "both",
+              }}>
               <div className="relative w-full h-full p-4">
-                <span className={cn(
-                  "text-2xl font-bold absolute top-2 left-2",
-                  queen.color === 'red' ? "text-red-500" : "text-gray-700"
-                )}>
+                <span
+                  className={cn(
+                    "text-2xl font-bold absolute top-2 left-2",
+                    queen.color === "red" ? "text-red-500" : "text-gray-700"
+                  )}>
                   Q
                 </span>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-6xl">
-                    {queen.suit === 'hearts' ? '♥️' : 
-                     queen.suit === 'diamonds' ? '♦️' : 
-                     queen.suit === 'clubs' ? '♣️' : '♠️'}
+                    {queen.suit === "HEARTS"
+                      ? "♥️"
+                      : queen.suit === "DIAMONDS"
+                      ? "♦️"
+                      : queen.suit === "CLUBS"
+                      ? "♣️"
+                      : "♠️"}
                   </span>
                 </div>
               </div>
@@ -75,4 +79,4 @@ export function QueenChallenge({ queen, onGuess }: QueenChallengeProps) {
       </div>
     </div>
   );
-} 
+}

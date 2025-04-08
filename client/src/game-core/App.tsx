@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useGameStore } from "./store/GameStore";
+import React, { useEffect, useState } from "react";
+import { useGameStore } from "./store/gameStore";
 import { Header } from "./components/Header";
 import { GameBoard } from "./components/GameBoard";
 import { GameControls } from "./components/GameControls";
@@ -16,14 +16,21 @@ import i18n from "./i18n/config";
 import { AudioManager } from "./sound-design/audioManager";
 import { SacrificePopup } from "./components/SacrificePopup";
 import { JokerExchangePopup } from "./components/JokerExchangePopup";
+import Loading from "../components/Loading";
 
-export default function App() {
+interface AppProps {
+  gameState: any;
+}
+
+export default function App({ gameState }: AppProps) {
   const { phase, initializeGame, isGameOver } = useGameStore();
   const { t, i18n } = useTranslation();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    initializeGame();
-  }, [initializeGame]);
+    initializeGame(gameState);
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
     // Démarrer la musique automatiquement au chargement de l'application
@@ -33,6 +40,8 @@ export default function App() {
       audioManager.stopBackgroundMusic();
     };
   }, []);
+
+  if (isLoading) return <Loading />;
 
   return (
     <I18nextProvider i18n={i18n}>
@@ -45,8 +54,8 @@ export default function App() {
         </div>
 
         {isGameOver && <GameOver reason="surrender" onRestart={initializeGame} />}
-        {phase === "setup" && <SetupPhase />}
-        {!isGameOver && phase !== "setup" && (
+        {phase === "SETUP" && <SetupPhase />}
+        {!isGameOver && phase !== "SETUP" && (
           <>
             <div className="pb-[calc(144px+80px)] container mx-auto px-4 py-4">
               <Header />

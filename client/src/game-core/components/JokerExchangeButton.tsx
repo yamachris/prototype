@@ -21,7 +21,7 @@ export function JokerExchangeButton() {
 
     Object.values(columns).flatMap((column) =>
       column.cards.map((card, index) => {
-        if (card.type == "joker") {
+        if (card.value == "JOKER") {
           whereJokerArePresent.push({ suit: column.cards[0].suit, index: index });
         }
       })
@@ -57,7 +57,7 @@ export function JokerExchangeButton() {
     }
   }, [turn, currentPlayer]);
 
-  const canExchange = phase === "action" && !hasPlayedAction;
+  const canExchange = phase === "PLAY" && !hasPlayedAction;
 
   const handleExchangeClick = (e: React.MouseEvent) => {
     e.stopPropagation();

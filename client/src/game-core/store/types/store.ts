@@ -14,7 +14,6 @@ export interface GameStore extends GameState {
   // Game Flow Actions
   setPhase: (phase: Phase) => void;
   handleStrategicShuffle: () => void;
-  endTurn: () => void;
   setAttackMode: (mode: boolean) => void;
   setMessage: (message: string) => void;
   canUseStrategicShuffle: () => boolean;

@@ -1,4 +1,4 @@
-import { Card, Player, Phase } from '../types/game';
+import { Card, Player, Phase } from "../types/game";
 
 export function shouldSkipDiscard(playedCardsLastTurn: number): boolean {
   return playedCardsLastTurn > 0;
@@ -18,28 +18,34 @@ export function handleJokerHeal(player: Player): Player {
   return {
     ...player,
     health: newHealth,
-    maxHealth: newHealth
+    maxHealth: newHealth,
   };
 }
 
 export function getNextPhase(currentPhase: Phase): Phase {
-  const phases: Phase[] = ['discard', 'draw', 'action'];
+  const phases: Phase[] = ["DISCARD", "DRAW", "PLAY"];
   const currentIndex = phases.indexOf(currentPhase);
   return phases[(currentIndex + 1) % phases.length];
 }
 
-export function getPhaseMessage(phase: Phase, hasDiscarded: boolean, hasDrawn: boolean, hasPlayedAction: boolean, turn: number): string {
+export function getPhaseMessage(
+  phase: Phase,
+  hasDiscarded: boolean,
+  hasDrawn: boolean,
+  hasPlayedAction: boolean,
+  turn: number
+): string {
   switch (phase) {
-    case 'discard':
+    case "DISCARD":
       if (turn === 1) {
         return "Pour commencer la partie, veuillez défausser votre première carte";
       }
-      return hasDiscarded ? '' : "Défaussez une carte pour continuer";
-    case 'draw':
+      return hasDiscarded ? "" : "Défaussez une carte pour continuer";
+    case "DRAW":
       return "Piochez une carte ou deux cartes (Main ou Réserve)";
-    case 'action':
+    case "PLAY":
       return "Phase d'action - Vous pouvez jouer ou passer";
     default:
-      return '';
+      return "";
   }
 }
