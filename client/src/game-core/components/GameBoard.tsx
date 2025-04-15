@@ -2,11 +2,10 @@ import React from "react";
 import { useGameStore } from "../store/gameStore";
 import { UnitColumn } from "./UnitColumn";
 import { Suit } from "../types/game";
-import { canActivateColumn } from "../utils/gameLogic";
 import { RevolutionPopup } from "./RevolutionPopup";
 
 export function GameBoard() {
-  const { selectedCards, columns, handleCardPlace, phase, checkRevolution } = useGameStore();
+  const { selectedCards, columns, handleCardPlace, phase } = useGameStore();
 
   const suits: Suit[] = ["HEARTS", "DIAMONDS", "CLUBS", "SPADES"];
 
@@ -57,9 +56,6 @@ export function GameBoard() {
     if (!canPlaceCard(suit)) return;
 
     handleCardPlace(suit, columns[suit].cards.length);
-
-    // Vérifie si une révolution se produit après le placement de la carte
-    checkRevolution(suit);
   };
 
   return (

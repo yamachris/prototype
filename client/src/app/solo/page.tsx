@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Loading from "../../components/Loading";
+import PageNotFound from "@/components/PageNotFound";
 import { useSearchParams } from "next/navigation";
 import { gameApi } from "@/services/api";
-import { GameState } from "@/game-core/types/game";
 
 // Import dynamique du composant App pour éviter les problèmes de SSR
 const GameApp = dynamic(() => import("../../game-core/App"), {
@@ -48,5 +48,6 @@ export default function SoloGame() {
 
   if (isLoading) return <Loading />;
 
+  if (error) return <PageNotFound />;
   return <GameApp gameState={gameState} />;
 }

@@ -3,7 +3,7 @@
     "turn": "Tour {{number}}",
     "discard": "Défausse",
     "draw": "Pioche",
-    "action": "Action",
+    "play": "Jouer",
     "messages": {
       "discardPhase": "Défaussez une carte pour continuer",
       "drawPhase": "Piochez une carte",

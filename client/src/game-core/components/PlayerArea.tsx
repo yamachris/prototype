@@ -4,56 +4,15 @@ import { Card } from "./Card";
 import { Shield, ArrowLeftRight, RefreshCw } from "lucide-react";
 import { cn } from "../utils/cn";
 import type { Card as CardType, Phase } from "../types/game";
-import { JokerActions } from "./JokerActions";
 import { useTranslation } from "react-i18next";
 import { QueenChallenge } from "./QueenChallenge";
 
 import { JokerExchangeButton } from "./JokerExchangeButton";
 
-interface GameState {
-  currentPlayer: {
-    hand: CardType[];
-    reserve: CardType[];
-    discardPile: CardType[];
-    hasUsedStrategicShuffle: boolean;
-  };
-  phase: Phase;
-  selectedCards: CardType[];
-  hasDiscarded: boolean;
-  hasPlayedAction: boolean;
-  message: string;
-  awaitingStrategicShuffleConfirmation: boolean;
-  isPlayerTurn: boolean;
-  queenChallenge: {
-    isActive: boolean;
-    queen: typeof Card | null;
-  };
-}
-
-interface GameStore extends GameState {
-  selectCard: (card: CardType) => void;
-  handleDiscard: (card: CardType) => void;
-  handleDrawCard: () => void;
-  exchangeCards: (card1: CardType, card2: CardType) => void;
-  handleJokerAction: (joker: CardType, action: "heal" | "attack") => void;
-  setAttackMode: (mode: boolean) => void;
-  setMessage: (message: string) => void;
-  handleStrategicShuffle: () => void;
-  setPhase: (phase: Phase) => void;
-  canUseStrategicShuffle: () => boolean;
-  confirmStrategicShuffle: () => void;
-  getState: () => GameStore;
-  handleQueenChallenge: (isCorrect: boolean) => void;
-  handleCardPlace: (suit: string, index: number) => void;
-  handleSacrifice: (suit: string, card: CardType) => void;
-  setSacrificeMode: (mode: boolean) => void;
-}
-
 export function PlayerArea() {
   const {
     currentPlayer,
     phase,
-    columns,
     isPlayerTurn,
     selectedCards,
     selectCard,
@@ -65,7 +24,6 @@ export function PlayerArea() {
     handleJokerAction,
     handleCardPlace,
     handleQueenChallenge,
-    setMessage,
     handleStrategicShuffle: storeHandleStrategicShuffle,
   } = useGameStore();
 
@@ -75,14 +33,6 @@ export function PlayerArea() {
 
   const canUseStrategicShuffle = useGameStore((state) => state.canUseStrategicShuffle());
   const message = useGameStore((state) => state.message);
-  const awaitingConfirmation = useGameStore((state) => state.awaitingStrategicShuffleConfirmation);
-  const confirmStrategicShuffle = useGameStore((state) => state.confirmStrategicShuffle);
-
-  // const isJokerUsedCard = columns.map((column) => {});
-
-  // [suit].cards.find((card) => card.type === "JOKER");
-
-  // {isJokerUsedCard && <JokerExchangeButton jokerUsedCard={isJokerUsedCard} currentSuit={suit} />}
 
   const handleStrategicShuffle = () => {
     if (!canUseStrategicShuffle) return;
@@ -106,51 +56,6 @@ export function PlayerArea() {
   } | null>(null);
 
   const totalCards = currentPlayer.hand.length + currentPlayer.reserve.length;
-  const canDiscard = phase === "DISCARD" && !hasDiscarded;
-  const canDraw = phase === "DRAW" && totalCards < 7;
-
-  const handleCardClick = (card: CardType, from: "hand" | "reserve") => {
-    if (card.type === "JOKER" && isPlayerTurn && phase === "PLAY") {
-      selectCard(card);
-      return;
-    }
-
-    if (exchangeMode) {
-      if (selectedForExchange) {
-        if (selectedForExchange.from !== from) {
-          exchangeCards(
-            selectedForExchange.from === "hand" ? selectedForExchange.card : card,
-            selectedForExchange.from === "reserve" ? selectedForExchange.card : card
-          );
-        }
-        setExchangeMode(false);
-        setSelectedForExchange(null);
-      } else {
-        setSelectedForExchange({ card, from });
-      }
-      return;
-    }
-
-    if (phase === "DISCARD" && canDiscard) {
-      handleDiscard(card);
-      return;
-    }
-
-    const isSelected = selectedCards.some((c) => c.id === card.id);
-    if (isSelected) {
-      selectCard(card);
-    } else if (selectedCards.length < 2) {
-      selectCard(card);
-    }
-  };
-
-  const handleJokerActionClick = (action: "heal" | "attack") => {
-    const selectedJoker = selectedCards[0];
-    if (selectedJoker?.type === "JOKER") {
-      handleJokerAction(selectedJoker, action);
-    }
-  };
-
   const { t } = useTranslation();
 
   const [showQueenChallenge, setShowQueenChallenge] = useState(false);

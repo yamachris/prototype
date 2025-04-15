@@ -1,12 +1,20 @@
-import React from 'react';
-import { Flag, RefreshCw } from 'lucide-react';
-import { useGameStore } from '../store/gameStore';
-import { cn } from '../utils/cn';
-import { useTranslation } from 'react-i18next';
+"use client";
+
+import React from "react";
+import { Flag, RefreshCw, UserRound } from "lucide-react";
+import { useGameStore } from "../store/gameStore";
+import { cn } from "../utils/cn";
+import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 
 export function GameOver() {
   const { t } = useTranslation();
-  const { currentPlayer, initializeGame } = useGameStore();
+  const { currentPlayer } = useGameStore();
+  const router = useRouter();
+
+  const newGame = () => {
+    router.push("/");
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
@@ -16,25 +24,20 @@ export function GameOver() {
             <Flag className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {t('game.gameOver.title')}
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("game.gameOver.title")}</h2>
 
           <div className="space-y-2">
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              {t('game.gameOver.surrendered')}
-            </p>
+            <p className="text-lg text-gray-600 dark:text-gray-300">{t("game.gameOver.surrendered")}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('game.gameOver.finalScore', { score: currentPlayer.health })}
+              {t("game.gameOver.finalScore", { score: currentPlayer.health })}
             </p>
           </div>
 
           <button
-            onClick={initializeGame}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all"
-          >
+            onClick={newGame}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all">
             <RefreshCw className="w-5 h-5" />
-            {t('game.gameOver.newGame')}
+            {t("game.gameOver.newGame")}
           </button>
         </div>
       </div>

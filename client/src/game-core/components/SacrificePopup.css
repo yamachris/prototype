@@ -89,15 +89,18 @@
   margin-bottom: 0.5rem;
 }
 
-.suit-header.hearts, .suit-header.diamonds {
+.suit-header.HEARTS,
+.suit-header.DIAMONDS {
   color: #ff4d4d;
 }
 
-.suit-header.clubs, .suit-header.spades {
+.suit-header.CLUBS,
+.suit-header.SPADES {
   color: #333;
 }
 
-.dark .suit-header.clubs, .dark .suit-header.spades {
+.dark .suit-header.CLUBS,
+.dark .suit-header.SPADES {
   color: #fff;
 }
 
@@ -196,7 +199,8 @@
   gap: 1rem;
 }
 
-.cancel-button, .confirm-button {
+.cancel-button,
+.confirm-button {
   padding: 0.5rem 1rem;
   border-radius: 4px;
   border: none;

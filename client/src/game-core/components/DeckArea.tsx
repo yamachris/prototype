@@ -19,10 +19,8 @@ export function DeckArea() {
   const handleDeckClick = () => {
     if (isDeckEmpty && hasDiscardPile) {
       recycleDiscardPile();
-    } else if (canDrawToReserve) {
-      handleDrawCard(true);
-    } else if (canDrawToHand) {
-      handleDrawCard(false);
+    } else {
+      handleDrawCard();
     }
   };
 
@@ -31,7 +29,7 @@ export function DeckArea() {
       <div className="relative">
         <button
           onClick={handleDeckClick}
-          disabled={(!canDrawToHand && !canDrawToReserve) || (isDeckEmpty && !hasDiscardPile)}
+          disabled={isDeckEmpty && !hasDiscardPile}
           className={cn(
             "w-32 h-48 md:w-40 md:h-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border-2 group relative",
             canDrawToHand || canDrawToReserve || (isDeckEmpty && hasDiscardPile)
@@ -66,14 +64,14 @@ export function DeckArea() {
           <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
             {canDrawToHand && (
               <button
-                onClick={() => handleDrawCard(false)}
+                onClick={() => handleDrawCard()}
                 className="px-3 py-1 bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 transition-colors">
                 Main
               </button>
             )}
             {canDrawToReserve && (
               <button
-                onClick={() => handleDrawCard(true)}
+                onClick={() => handleDrawCard()}
                 className="px-3 py-1 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 transition-colors">
                 Réserve
               </button>

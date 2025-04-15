@@ -3,7 +3,7 @@
     "turn": "Turno {{number}}",
     "discard": "Descartar",
     "draw": "Robar",
-    "action": "Acción",
+    "play": "Jugar",
     "messages": {
       "discardPhase": "Descarta una carta para continuar",
       "drawPhase": "Roba una carta",

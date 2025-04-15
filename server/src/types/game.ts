@@ -1,22 +1,8 @@
-export type Suit = 'HEARTS' | 'DIAMONDS' | 'CLUBS' | 'SPADES';
-export type SuitCard = 'HEARTS' | 'DIAMONDS' | 'CLUBS' | 'SPADES' | 'SPECIAL';
-export type Phase = 'SETUP' | 'DRAW' | 'PLAY' | 'DISCARD' | 'END';
-export type CardType = 'STANDARD' | 'JOKER';
-export type Value =
-  | 'A'
-  | '2'
-  | '3'
-  | '4'
-  | '5'
-  | '6'
-  | '7'
-  | '8'
-  | '9'
-  | '10'
-  | 'J'
-  | 'Q'
-  | 'K'
-  | 'JOKER';
+export type Suit = "HEARTS" | "DIAMONDS" | "CLUBS" | "SPADES";
+export type SuitCard = "HEARTS" | "DIAMONDS" | "CLUBS" | "SPADES" | "SPECIAL";
+export type Phase = "SETUP" | "DRAW" | "PLAY" | "DISCARD" | "END";
+export type CardType = "STANDARD" | "JOKER";
+export type Value = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "JOKER";
 
 export interface Card {
   id: string;
@@ -27,6 +13,12 @@ export interface Card {
   isSpecial?: boolean;
   type: CardType;
   isRedJoker?: boolean;
+}
+
+export interface Profile {
+  name: string;
+  epithet: string;
+  avatar: string;
 }
 
 export interface Player {
@@ -41,6 +33,7 @@ export interface Player {
     epithet: string;
     avatar?: string;
   };
+  hasUsedStrategicShuffle: boolean;
 }
 
 interface AttackStatus {
@@ -53,6 +46,12 @@ export interface ColumnState {
   isDestroyed: boolean;
   attackStatus: AttackStatus;
   hasLuckyCard: boolean;
+  reserveSuit: Card;
+
+  faceCards: {
+    J?: Card; // Valet
+    K?: Card; // Roi
+  };
 }
 
 export interface GameState {
@@ -68,14 +67,15 @@ export interface GameState {
   hasDrawn: boolean;
   hasPlayedAction: boolean;
   isGameOver: boolean;
-  playedCardsLastTurn: number;
+  // playedCardsLastTurn: number;
   attackMode: boolean;
   message: string;
   winner: string | null;
   canEndTurn: boolean;
   blockableColumns: number[];
   // canBlock: boolean;
-  blockedColumns: number[];
+  blockedColumns: string[];
+  showRevolutionPopup: boolean;
 }
 
 export type attackCardButton = {

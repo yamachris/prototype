@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../types/game";
-import { useTranslation } from "react-i18next";
-import { ArrowLeftRight, Swords } from "lucide-react";
+import { Swords } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useGameStore } from "../store/gameStore";
 
@@ -10,9 +9,7 @@ interface CardAttackButtonProps {
 }
 
 export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
-  const { t } = useTranslation();
-  const { currentPlayer, phase, hasPlayedAction, columns, turn, handleAttack, activateCardAttackButton } =
-    useGameStore();
+  const { phase, hasPlayedAction, columns, turn, handleAttack, activateCardAttackButton } = useGameStore();
 
   const column = columns[attackCard.suit];
   const attackStatus = column.attackStatus;
@@ -26,13 +23,9 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
 
   const valet = column?.faceCards?.J;
 
-  // console.log(column);
-
   useEffect(() => {
-    // console.log("---------isAttackButtonActive ", isAttackButtonActive);
-
     if (attackCard.value == "J") {
-      if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "JOKER") {
+      if (valet?.activatedBy == "SACRIFICE" || valet?.activatedBy == "JOKER") {
         if (!localState.canAttackNow) {
           setLocalState({ ...localState, currentTurn: turn, canAttackNow: true });
           return;
@@ -51,7 +44,6 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
 
   const handleAttackClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("handleAttackClick ", attackButtons);
 
     handleAttack(attackCard);
   };
@@ -59,7 +51,7 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
   var isEnabled = phase == "PLAY" && !hasPlayedAction;
 
   if (!hasDoneOnce && attackCard.value == "J") {
-    if (valet?.activatedBy == "sacrifice" || valet?.activatedBy == "JOKER") {
+    if (valet?.activatedBy == "SACRIFICE" || valet?.activatedBy == "JOKER") {
       isEnabled = true;
     }
   }

@@ -35,7 +35,7 @@ export const JokerExchangePopup: React.FC = () => {
       setSelectedJokerExchangeCards([]);
       handleClose();
 
-      checkRevolution(selectedCards[0].suit);
+      // checkRevolution(selectedCards[0].suit);
     }
   };
 

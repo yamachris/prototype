@@ -3,7 +3,7 @@
     "turn": "回合 {{number}}",
     "discard": "棄牌",
     "draw": "抽牌",
-    "action": "行動",
+    "play": "行動",
     "messages": {
       "discardPhase": "棄置一張牌以繼續",
       "drawPhase": "抽取一張牌",

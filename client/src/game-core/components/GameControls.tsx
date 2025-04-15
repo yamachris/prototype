@@ -17,12 +17,9 @@ export function GameControls() {
     handleSurrender,
     handleSkipAction,
     currentPlayer,
-    handleStrategicShuffleAction,
-    language,
   } = useGameStore();
 
   const { t, i18n } = useTranslation();
-  const [showModal, setShowModal] = useState(false);
   const [isActionDone, setIsActionDone] = useState(false);
 
   // Forcer le rendu quand la langue change
@@ -38,15 +35,6 @@ export function GameControls() {
       i18n.off("languageChanged", handleLanguageChange);
     };
   }, [i18n]);
-
-  const handleStrategicShuffle = () => {
-    setShowModal(true);
-  };
-
-  const handleConfirmStrategicShuffle = () => {
-    handleStrategicShuffleAction();
-    setShowModal(false);
-  };
 
   const handleSurrenderClick = () => {
     if (window.confirm(t("game.actions.confirmSurrender"))) {
@@ -144,36 +132,6 @@ export function GameControls() {
           </div>
         </div>
       </div>
-
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{t("game.ui.strategicShuffle")}</h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{t("game.messages.strategicShuffleConfirm")}</p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                {t("game.ui.cancel")}
-              </button>
-              <button
-                onClick={handleConfirmStrategicShuffle}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                {t("game.ui.confirm")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

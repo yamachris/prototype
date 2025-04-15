@@ -3,7 +3,7 @@
     "turn": "Turn {{number}}",
     "discard": "Discard",
     "draw": "Draw",
-    "action": "Action",
+    "play": "Play",
     "messages": {
       "discardPhase": "Discard a card to continue",
       "drawPhase": "Draw a card",

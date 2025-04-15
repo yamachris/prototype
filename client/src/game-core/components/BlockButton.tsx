@@ -3,19 +3,20 @@ import { useTranslation } from "react-i18next";
 import { Shield } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useGameStore } from "../store/gameStore";
+import { Suit } from "../types/game";
 
 interface BlockButtonProps {
-  columnIndex: number;
+  suit: Suit;
 }
 
-export function BlockButton({ columnIndex }: BlockButtonProps) {
+export function BlockButton({ suit }: BlockButtonProps) {
   const { t } = useTranslation();
   const { handleBlock, blockedColumns, hasPlayedAction } = useGameStore();
-  const isBlocked = blockedColumns.includes(columnIndex);
+  const isBlocked = blockedColumns.includes(suit);
 
   return (
     <button
-      onClick={() => !isBlocked && !hasPlayedAction && handleBlock(columnIndex)}
+      onClick={() => !isBlocked && !hasPlayedAction && handleBlock(suit)}
       disabled={isBlocked || hasPlayedAction}
       className={cn(
         "flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-md transition-all duration-200",

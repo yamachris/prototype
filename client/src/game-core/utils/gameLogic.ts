@@ -43,17 +43,6 @@ export function getPhaseMessage(
   }
 }
 
-export function handleJokerAction(player: Player, action: "heal" | "attack"): Player {
-  if (action === "heal") {
-    return {
-      ...player,
-      health: Math.min(player.health + 3, player.maxHealth),
-    };
-  }
-  // Logique d'attaque à implémenter
-  return player;
-}
-
 export function canActivateColumn(cards: Card[], suit: Suit): boolean {
   if (cards.length !== 2) return false;
 

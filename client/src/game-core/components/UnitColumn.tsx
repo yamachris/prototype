@@ -1,6 +1,6 @@
 import React from "react";
 import { Heart, Diamond, Club, Spade, Sword, Crown, Columns, Joystick } from "lucide-react";
-import { Suit, ColumnState } from "../types/game";
+import { Card, Suit, ColumnState } from "../types/game";
 import { cn } from "../utils/cn";
 import { useTranslation } from "react-i18next";
 import { useGameStore } from "../store/gameStore";
@@ -8,7 +8,6 @@ import { CardExchangeButton } from "./CardExchangeButton";
 import { PlaceSevenButton } from "./PlaceSevenButton";
 import { CardAttackButton } from "./CardAttackButton";
 import { BlockButton } from "./BlockButton";
-import { ValetAttackButton } from "./ValetAttackButton";
 
 interface UnitColumnProps {
   suit: Suit;
@@ -47,22 +46,6 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
     });
 
     return hasSevenCards && canBlock;
-  };
-
-  // Convertir la suite en index
-  const suitToIndex = (suit: Suit): number => {
-    switch (suit) {
-      case "HEARTS":
-        return 0;
-      case "DIAMONDS":
-        return 1;
-      case "CLUBS":
-        return 2;
-      case "SPADES":
-        return 3;
-      default:
-        return -1;
-    }
   };
 
   const getSuitIcon = () => {
@@ -187,34 +170,24 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
             </>
           )}
           {/* Afficher l'épée d'attaque pour les unités normales */}
-          {/* {(attackCard ? true : false) && !isValet && ( */}
-          {(attackCard ? true : false) && <CardAttackButton attackCard={attackCard} />}
+          {attackCard && <CardAttackButton attackCard={attackCard} />}
           {isJokerInSlot && <Joystick className={cn("w-5 h-5 pl-50 absolute right-[25%]", "text-red-700  ")} />}
-
-          {/* Afficher l'épée d'attaque pour le Valet */}
-          {/* {isValet && cardInSlot && (
-            <ValetAttackButton valetCard={cardInSlot} columnSuit={suit} />
-          )} */}
         </div>
       </div>
     );
   };
 
-  // Debug logs améliorés
-  // console.log("UnitColumn Debug:", {
-  //   suit,
-  //   suitIndex: suitToIndex(suit),
-  //   cardsLength: column.cards.length,
-  //   cardValues: column.cards.map((c) => c.value),
-  //   hasCompleteSeq: hasCompleteSequence(),
-  //   phase,
-  //   hasPlayedAction,
-  // });
-
   const handleClick = () => {
     if (isActive) {
       onCardPlace();
     }
+  };
+
+  const getColor = (card?: Card) => {
+    var color = "black";
+    if (card?.suit === "DIAMONDS" || card?.suit === "HEARTS") color = "red";
+
+    return color;
   };
 
   return (
@@ -234,9 +207,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
       <div className="flex justify-between items-center px-4 py-2.5">
         <div className="flex items-center gap-4">
           {getSuitIcon()}
-          {column.cards.length >= 7 && phase === "PLAY" && !hasPlayedAction && (
-            <BlockButton columnIndex={suitToIndex(suit)} />
-          )}
+          {column.cards.length >= 7 && phase === "PLAY" && !hasPlayedAction && <BlockButton suit={suit} />}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{column.cards.length}/10</span>
@@ -273,7 +244,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
               <span
                 className={cn(
                   "text-xs",
-                  column.faceCards?.J?.color === "red" ? "text-red-500" : "text-gray-500 dark:text-[#404859]"
+                  getColor(column.faceCards?.J) === "red" ? "text-red-500" : "text-gray-500 dark:text-[#404859]"
                 )}>
                 {column.faceCards?.J ? "J" : "Valet"}
               </span>
@@ -290,7 +261,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
             <span
               className={cn(
                 "text-xs mt-1",
-                column.faceCards?.K?.color === "red" ? "text-red-500" : "text-gray-500 dark:text-[#404859]"
+                getColor(column.faceCards?.K) === "red" ? "text-red-500" : "text-gray-500 dark:text-[#404859]"
               )}>
               {column.faceCards?.K ? "K" : "Roi"}
             </span>

@@ -58,7 +58,7 @@ export function CardExchangeButton({ activatorCard, currentSuit }: CardExchangeB
     } else if (isValidJokerRemplacementCardSelected) {
       console.log(activatorCard);
 
-      handleJokerExchange(activatorCard, isValidJokerRemplacementCardSelected);
+      handleJokerExchange(isValidJokerRemplacementCardSelected);
     }
   };
 

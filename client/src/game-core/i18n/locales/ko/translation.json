@@ -3,7 +3,7 @@
     "turn": "턴 {{number}}",
     "discard": "버리기",
     "draw": "드로우",
-    "action": "액션",
+    "play": "놀다",
     "messages": {
       "discardPhase": "계속하려면 카드를 한 장 버리세요",
       "drawPhase": "카드를 한 장 드로우하세요",

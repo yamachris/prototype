@@ -1,8 +1,8 @@
 import { Card, Player, Phase } from "../types/game";
 
-export function shouldSkipDiscard(playedCardsLastTurn: number): boolean {
-  return playedCardsLastTurn > 0;
-}
+// export function shouldSkipDiscard(playedCardsLastTurn: number): boolean {
+//   return playedCardsLastTurn > 0;
+// }
 
 export function calculateMissingCards(player: Player): number {
   const totalCards = player.hand.length + player.reserve.length;

@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import { GameState, Card } from "../game-core/types/game";
+import { GameState, Card, Profile, Suit } from "../game-core/types/game";
 
 class GameSocket {
   private socket: Socket | null = null;
@@ -73,6 +73,80 @@ class GameSocket {
   handlePlaceCard(gameId: string, suit: string, selectedCards: Card[]) {
     if (this.socket) {
       this.socket.emit("placeCard", { gameId, suit, selectedCards });
+    }
+  }
+
+  handleStrategicShuffle(gameId: string) {
+    console.log("handleStrategicShuffle");
+
+    if (this.socket) {
+      this.socket.emit("strategicShuffle", gameId);
+    }
+  }
+
+  handleExchangeCards(gameId: string, card1: Card, card2: Card) {
+    if (this.socket) {
+      this.socket.emit("exchangeCards", { gameId, card1, card2 });
+    }
+  }
+
+  handleRecycleDiscardPile(gameId: string) {
+    if (this.socket) {
+      this.socket.emit("recycleDiscardPile", gameId);
+    }
+  }
+
+  handleJokerExchange(gameId: string, selectedCard: Card) {
+    if (this.socket) {
+      this.socket.emit("jokerExchange", { gameId, selectedCard });
+    }
+  }
+
+  handleJokerAction(gameId: string, jokerCard: Card, action: string) {
+    if (this.socket) {
+      this.socket.emit("jokerAction", { gameId, jokerCard, action });
+    }
+  }
+
+  handleAttack(gameId: string, attackCard: Card) {
+    if (this.socket) {
+      this.socket.emit("attack", { gameId, attackCard });
+    }
+  }
+
+  handleSurrender(gameId: string) {
+    if (this.socket) {
+      this.socket.emit("surrender", gameId);
+    }
+  }
+
+  handleUpdateProfile(gameId: string, profile: Profile) {
+    if (this.socket) {
+      this.socket.emit("updateProfile", { gameId, profile });
+    }
+  }
+
+  handleSacrificeSpecialCard(gameId: string, selectedCards: Card[]) {
+    if (this.socket) {
+      this.socket.emit("sacrificeSpecialCard", { gameId, selectedCards });
+    }
+  }
+
+  handleBlock(gameId: string, suit: Suit) {
+    if (this.socket) {
+      this.socket.emit("block", { gameId, suit });
+    }
+  }
+
+  handleQueenChallenge(gameId: string, isCorrect: boolean) {
+    if (this.socket) {
+      this.socket.emit("queenChallenge", { gameId, isCorrect });
+    }
+  }
+
+  handleActivatorExchange(gameId: string, columnCard: Card, playerCard: Card) {
+    if (this.socket) {
+      this.socket.emit("activatorExchange", { gameId, columnCard, playerCard });
     }
   }
 }

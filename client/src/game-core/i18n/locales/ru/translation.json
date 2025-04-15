@@ -3,7 +3,7 @@
     "turn": "Ход {{number}}",
     "discard": "Сброс",
     "draw": "Взять карту",
-    "action": "Действие",
+    "play": "играть",
     "messages": {
       "discardPhase": "Сбросьте карту, чтобы продолжить",
       "drawPhase": "Возьмите карту",

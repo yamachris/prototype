@@ -1,40 +1,28 @@
-import { Card, Suit, Value } from '../types/game';
-import { v4 as uuidv4 } from 'uuid';
+import { Card, Suit, Value } from "../types/game";
+import { v4 as uuidv4 } from "uuid";
 
 export const createDeck = (): Card[] => {
-  const suits: Suit[] = ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES'];
-  const VALUES: Value[] = [
-    'A',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '10',
-    'J',
-    'Q',
-    'K',
-  ];
+  const suits: Suit[] = ["HEARTS", "DIAMONDS", "CLUBS", "SPADES"];
+  // const suits: Suit[] = ["HEARTS", "HEARTS", "HEARTS", "HEARTS"];
+  // const suits: Suit[] = ["HEARTS"];
+  const VALUES: Value[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
   const deck: Card[] = [];
 
   // Ajouter les jokers
   deck.push({
     id: uuidv4(),
-    suit: 'SPECIAL',
-    type: 'JOKER',
-    value: 'JOKER',
+    suit: "SPECIAL",
+    type: "JOKER",
+    value: "JOKER",
     isJoker: true,
     isRedJoker: true,
   });
   deck.push({
     id: uuidv4(),
-    suit: 'SPECIAL',
-    type: 'JOKER',
-    value: 'JOKER',
+    suit: "SPECIAL",
+    type: "JOKER",
+    value: "JOKER",
     isJoker: true,
   });
 
@@ -46,7 +34,7 @@ export const createDeck = (): Card[] => {
         id: uuidv4(),
         suit,
         value,
-        type: 'STANDARD',
+        type: "STANDARD",
         // isSpecial: value > 10,
         // isActivator: value === 1,
       });

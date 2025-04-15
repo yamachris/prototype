@@ -31,10 +31,11 @@ export type Card = {
   id: string;
   suit: Suit;
   value: Value;
-  type: "standard" | "JOKER";
+  type: "STANDARD" | "JOKER";
   color: CardColor;
   isRedJoker?: boolean;
   state?: ValetCardState; // État du Valet (uniquement pour les cartes J)
+  activatedBy?: "SACRIFICE" | "JOKER";
 };
 
 export interface SacrificeInfo {
@@ -76,21 +77,10 @@ export interface GameState extends SacrificeState {
   sacrificeInfo: SacrificeInfo | null;
 }
 
-export interface GameStore extends GameState {
-  selectCard: (card: Card) => void;
-  handleDiscard: (card: Card) => void;
-  handleDrawCard: () => void;
-  exchangeCards: (card1: Card, card2: Card) => void;
-  handleJokerAction: (joker: Card, action: "heal" | "attack") => void;
-  setAttackMode: (mode: boolean) => void;
-  setMessage: (message: string) => void;
-  handleStrategicShuffle: () => void;
-  setPhase: (phase: Phase) => void;
-  canUseStrategicShuffle: () => boolean;
-  handlePassTurn: () => void;
-  handleSurrender: () => void;
-  handleSkipAction: () => void;
-  confirmStrategicShuffle: () => void;
+export interface Profile {
+  name: string;
+  epithet: string;
+  avatar: string;
 }
 
 export interface Player {
