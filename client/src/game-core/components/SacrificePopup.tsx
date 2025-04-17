@@ -96,7 +96,7 @@ export const SacrificePopup: React.FC = () => {
 
   const handleConfirm = () => {
     if (selectedSacrificeCards.length === requiredCards) {
-      sacrificeSpecialCard(selectedSacrificeCards);
+      sacrificeSpecialCard(specialCard, selectedSacrificeCards);
       setSelectedSacrificeCards([]);
       setSacrificeMode(false);
     }

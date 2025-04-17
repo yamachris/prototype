@@ -126,9 +126,9 @@ class GameSocket {
     }
   }
 
-  handleSacrificeSpecialCard(gameId: string, selectedCards: Card[]) {
+  handleSacrificeSpecialCard(gameId: string, specialCard: Card, selectedCards: Card[]) {
     if (this.socket) {
-      this.socket.emit("sacrificeSpecialCard", { gameId, selectedCards });
+      this.socket.emit("sacrificeSpecialCard", { gameId, specialCard, selectedCards });
     }
   }
 

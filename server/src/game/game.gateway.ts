@@ -129,10 +129,14 @@ export class GameGateway {
 
   @SubscribeMessage("sacrificeSpecialCard")
   async handleSacrificeSpecialCard(
-    @MessageBody() data: { gameId: string; selectedCards: Card[] },
+    @MessageBody() data: { gameId: string; specialCard: Card; selectedCards: Card[] },
     @ConnectedSocket() client: Socket
   ) {
-    const gameState = await this.gameService.handleSacrificeSpecialCard(data.gameId, data.selectedCards);
+    const gameState = await this.gameService.handleSacrificeSpecialCard(
+      data.gameId,
+      data.specialCard,
+      data.selectedCards
+    );
     this.server.to(data.gameId).emit("gameState", gameState);
   }
 

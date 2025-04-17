@@ -239,8 +239,6 @@ export class GameService {
       const hasActivator = selectedCards.some((card) => card.type === "JOKER" || card.value === "7");
 
       if (hasFaceCard && hasActivator) {
-        console.log("ggggggggggg");
-
         var faceCard = selectedCards.find((card) => card.value === "J" || card.value === "K");
         const activatorCard = selectedCards.find((card) => card.type === "JOKER" || card.value === "7");
         const activator = selectedCards.some((c) => c.type === "JOKER") ? "JOKER" : "seven";
@@ -261,8 +259,6 @@ export class GameService {
           gameState.currentPlayer.discardPile = [...gameState.currentPlayer.discardPile, activatorCard];
           gameState.hasPlayedAction = true;
           gameState.selectedCards = [];
-
-          console.log("hhh ", gameState.columns[suit].faceCards);
 
           game.state = gameState;
           await this.gameRepository.save(game);
@@ -873,7 +869,11 @@ export class GameService {
     return gameState;
   }
 
-  async handleSacrificeSpecialCard(gameId: string, selectedCards: Card[]): Promise<GameState | null> {
+  async handleSacrificeSpecialCard(
+    gameId: string,
+    specialCard: Card,
+    selectedCards: Card[]
+  ): Promise<GameState | null> {
     console.log("handleSacrificeSpecialCard ", gameId);
 
     const game = await this.gameRepository.findOne({ where: { id: gameId } });
@@ -881,12 +881,11 @@ export class GameService {
 
     const gameState = game.state;
 
-    const specialCard = selectedCards[0];
-
     if (!specialCard || selectedCards.length === 0) return null;
 
     // Vérifier le nombre de cartes requis
     const requiredCards = specialCard.value === "K" ? 3 : specialCard.value === "Q" ? 2 : 1;
+
     if (selectedCards.length !== requiredCards) return null;
 
     // Retirer les cartes sacrifiées des colonnes

@@ -47,7 +47,7 @@ export interface GameState {
 }
 
 export interface GameStore extends GameState {
-  sacrificeSpecialCard: (selectCards: Card[]) => void;
+  sacrificeSpecialCard: (specialCard: Card, selectCards: Card[]) => void;
   activateCardAttackButton: (card: Card) => void;
   canUseStrategicShuffle: () => boolean;
   closeJokerExchangePopup: () => void;
@@ -217,9 +217,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     gameSocket.handleJokerExchange(state.gameId, selectedCard);
   },
 
-  sacrificeSpecialCard: (selectedCards: Card[]) => {
+  sacrificeSpecialCard: (specialCard: Card, selectedCards: Card[]) => {
     const state = get();
-    gameSocket.handleSacrificeSpecialCard(state.gameId, selectedCards);
+    console.log("specialCard ", specialCard);
+    console.log("selectedCards ", selectedCards);
+
+    gameSocket.handleSacrificeSpecialCard(state.gameId, specialCard, selectedCards);
 
     //  // Jouer les sons appropriés
     //  if (healthBonus > 0) {
