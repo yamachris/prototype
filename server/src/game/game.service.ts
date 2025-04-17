@@ -568,7 +568,7 @@ export class GameService {
   }
 
   async handleQueenChallenge(gameId: string, selectedCards: Card[], isCorrect: boolean): Promise<GameState | null> {
-    console.log("handleQueenChallenge ", isCorrect, " ", gameId);
+    console.log("handleQueenChallenge ", selectedCards.length, " ", isCorrect, " ", gameId);
 
     const game = await this.gameRepository.findOne({ where: { id: gameId } });
     if (!game) return null;

@@ -62,7 +62,7 @@ export interface GameStore extends GameState {
   handleJokerAction: (jokerCard: CardType, action: "heal" | "attack") => void;
   handleJokerExchange: (selectedCard: Card) => void;
   handlePassTurn: () => void;
-  handleQueenChallenge: (isCorrect: boolean) => void;
+  handleQueenChallenge: (selectedcards: Card[], isCorrect: boolean) => void;
   handleRevolution: () => void;
   handleSkipAction: () => void;
   handleStrategicShuffle: () => void;
@@ -197,9 +197,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     gameSocket.handlePlaceCard(state.gameId, suit, state.selectedCards);
   },
 
-  handleQueenChallenge: (isCorrect: boolean) => {
+  handleQueenChallenge: (selectedCards: Card[], isCorrect: boolean) => {
+    console.log("handleQueenChallenge ", selectedCards);
+
     const state = get();
-    gameSocket.handleQueenChallenge(state.gameId, isCorrect);
+    gameSocket.handleQueenChallenge(state.gameId, selectedCards, isCorrect);
 
     // Jouer le son de soin
     AudioManager.getInstance().playHealSound();

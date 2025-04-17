@@ -138,9 +138,9 @@ class GameSocket {
     }
   }
 
-  handleQueenChallenge(gameId: string, isCorrect: boolean) {
+  handleQueenChallenge(gameId: string, selectedCards: Card[], isCorrect: boolean) {
     if (this.socket) {
-      this.socket.emit("queenChallenge", { gameId, isCorrect });
+      this.socket.emit("queenChallenge", { gameId, selectedCards, isCorrect });
     }
   }
 
