@@ -11,6 +11,7 @@ export type attackCardButton = {
   category: string; // Catégorie du bouton
   active: boolean; // État du bouton (actif ou inactif)
   wasUsed: boolean; //Est ce que le bouton a déjà été utilisé pour attaquer
+  insertedTurn?: number; //a quel Turn la carte a été inserée
 };
 
 export const initialAttackButtons: attackCardButton[] = [

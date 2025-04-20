@@ -240,15 +240,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   activateCardAttackButton: (card: Card) => {
+    console.log("activateCardAttackButton");
+
     set((state) => {
       const updatedColumns = { ...state.columns };
 
       updatedColumns[card.suit].attackStatus.attackButtons = updatedColumns[card.suit].attackStatus.attackButtons.map(
         (element) => {
-          if (element.id == card.value) return { ...element, active: true };
-          else return element;
+          // if(card.value =="J")
+          if (element.id == card.value) {
+            if (card.value == "J") return { ...element, active: true, wasUsed: false };
+            else return { ...element, active: true };
+          } else return element;
         }
       );
+
+      console.log(updatedColumns);
 
       return {
         ...state,

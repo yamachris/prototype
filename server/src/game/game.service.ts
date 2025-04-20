@@ -5,7 +5,22 @@ import { Card, Player, Phase, Suit, ColumnState, GameState, attackCardButton, Pr
 import { Game } from "../entities/game.entity";
 import { createDeck, drawCards, shuffleDeck } from "../utils/deck";
 
-import { initialAttackButtons } from "src/constants/definition";
+import {
+  initialAttackButtons,
+  JOKER_CARD,
+  QUEEN_CARD,
+  AS_CARD,
+  SEVEN_CARD,
+  KING_CARD,
+  JACK_CARD,
+  PLAY_PHASE,
+  DRAW_PHASE,
+  DISCARD_PHASE,
+  ATTACK_ACTION,
+  HEAL_ACTION,
+  SACRIFICE,
+  SETUP_PHASE,
+} from "src/constants/definition";
 import { getRandomValues } from "crypto";
 
 @Injectable()
@@ -49,7 +64,7 @@ export class GameService {
         hasUsedStrategicShuffle: false,
       },
       deck: remainingDeck,
-      phase: "SETUP",
+      phase: SETUP_PHASE,
       turn: 1,
       selectedCards: [],
       selectedSacrificeCards: [],
@@ -76,7 +91,7 @@ export class GameService {
         isDestroyed: false,
         attackStatus: {
           attackButtons: initialAttackButtons,
-          lastAttackCard: {},
+          lastAttackCard: { cardValue: "", turn: 0 },
         },
         hasLuckyCard: false,
         reserveSuit: null,
@@ -87,7 +102,7 @@ export class GameService {
         isDestroyed: false,
         attackStatus: {
           attackButtons: initialAttackButtons,
-          lastAttackCard: {},
+          lastAttackCard: { cardValue: "", turn: 0 },
         },
         hasLuckyCard: false,
         reserveSuit: null,
@@ -98,7 +113,7 @@ export class GameService {
         isDestroyed: false,
         attackStatus: {
           attackButtons: initialAttackButtons,
-          lastAttackCard: {},
+          lastAttackCard: { cardValue: "", turn: 0 },
         },
         hasLuckyCard: false,
         reserveSuit: null,
@@ -109,7 +124,7 @@ export class GameService {
         isDestroyed: false,
         attackStatus: {
           attackButtons: initialAttackButtons,
-          lastAttackCard: {},
+          lastAttackCard: { cardValue: "", turn: 0 },
         },
         hasLuckyCard: false,
         reserveSuit: null,
@@ -152,7 +167,7 @@ export class GameService {
     if (isReserveComplete) {
       gameState = {
         ...gameState,
-        phase: "DISCARD",
+        phase: DISCARD_PHASE,
         hasDiscarded: false,
         hasDrawn: false,
         hasPlayedAction: false,
@@ -180,9 +195,15 @@ export class GameService {
     const position = column.cards.length;
 
     // Handle placing a 7 from reserve suit to column
-    if (reserveSuitCard?.value === "7" && reserveSuitCard.suit === suit && position === 6) {
+    if (reserveSuitCard?.value === SEVEN_CARD && reserveSuitCard.suit === suit && position === 6) {
       gameState.selectedCards = [];
       gameState.hasPlayedAction = true;
+      gameState.columns[suit].cards = [
+        ...column.cards.slice(0, position),
+        reserveSuitCard,
+        ...column.cards.slice(position + 1),
+      ];
+      gameState.columns[suit].reserveSuit = null;
 
       game.state = gameState;
       await this.gameRepository.save(game);
@@ -190,7 +211,7 @@ export class GameService {
     }
 
     // Handle placing a 7 from hand/reserve to reserve suit
-    const selectedCard = selectedCards.find((card) => card.value === "7" || card.type === "JOKER");
+    const selectedCard = selectedCards.find((card) => card.value === SEVEN_CARD || card.type === JOKER_CARD);
     if (selectedCard && position === 6) {
       // Remove selected card from hand or reserve
       const newHand = gameState.currentPlayer.hand.filter((c) => c.id !== selectedCard.id);
@@ -224,7 +245,7 @@ export class GameService {
     }
 
     // Si c'est un Joker et que la colonne est pleine (10 cartes), on bloque simplement le placement
-    if (selectedCards[0]?.type === "JOKER" && column.cards.length >= 10) {
+    if (selectedCards[0]?.type === JOKER_CARD && column.cards.length >= 10) {
       gameState.selectedCards = [];
       gameState.message = "Cette colonne est pleine"; //TBC
 
@@ -235,13 +256,14 @@ export class GameService {
 
     // Cas d'activation avec Tête + Activateur
     if (selectedCards.length === 2) {
-      const hasFaceCard = selectedCards.some((card) => card.value === "J" || card.value === "K");
-      const hasActivator = selectedCards.some((card) => card.type === "JOKER" || card.value === "7");
+      const hasFaceCard = selectedCards.some((card) => card.value === JACK_CARD || card.value === KING_CARD);
+      const hasActivator = selectedCards.some((card) => card.type === JOKER_CARD || card.value === SEVEN_CARD);
 
       if (hasFaceCard && hasActivator) {
-        var faceCard = selectedCards.find((card) => card.value === "J" || card.value === "K");
-        const activatorCard = selectedCards.find((card) => card.type === "JOKER" || card.value === "7");
-        const activator = selectedCards.some((c) => c.type === "JOKER") ? "JOKER" : "seven";
+        var faceCard = selectedCards.find((card) => card.value === JACK_CARD || card.value === KING_CARD);
+        const activatorCard = selectedCards.find((card) => card.type === JOKER_CARD || card.value === SEVEN_CARD);
+        const activator = selectedCards.some((c) => c.type === JOKER_CARD) ? JOKER_CARD : "seven";
+        const isJack = selectedCards.some((card) => card.value === JACK_CARD);
 
         // Pour les têtes, on vérifie uniquement la couleur, pas l'activation
         if (faceCard?.suit === suit) {
@@ -251,6 +273,17 @@ export class GameService {
           const newReserve = gameState.currentPlayer.reserve.filter(
             (card) => !selectedCards.some((selected) => selected.id === card.id)
           );
+
+          if (isJack) {
+            const jackIndex = gameState.columns[suit].attackStatus.attackButtons.findIndex((e) => e.id == JACK_CARD);
+
+            gameState.columns[suit].attackStatus.attackButtons[jackIndex] = {
+              ...gameState.columns[suit].attackStatus.attackButtons[jackIndex],
+              active: true,
+              wasUsed: false,
+              insertedTurn: gameState.turn,
+            };
+          }
 
           gameState.columns[suit].faceCards[faceCard.value] = { ...faceCard, activatedBy: activator };
 
@@ -267,11 +300,11 @@ export class GameService {
       }
 
       // Sinon on vérifie si c'est un As + activateur
-      if (selectedCards.some((card) => card.value === "A") && hasActivator && position === 0) {
+      if (selectedCards.some((card) => card.value === AS_CARD) && hasActivator && position === 0) {
         console.log("Sinon on vérifie si c'est un As + activateur");
 
-        const ace = selectedCards.find((card) => card.value === "A");
-        const activator = selectedCards.find((card) => card.type === "JOKER" || card.value === "7");
+        const ace = selectedCards.find((card) => card.value === AS_CARD);
+        const activator = selectedCards.find((card) => card.type === JOKER_CARD || card.value === SEVEN_CARD);
 
         if (ace?.suit === suit && (column.cards.length === 0 || !column.hasLuckyCard)) {
           // Réinitialiser le blocage pour cette colonne car c'est un nouveau cycle
@@ -289,13 +322,12 @@ export class GameService {
           );
 
           // Déterminer le type d'activateur
-          const activatorDisplay = activator?.type === "JOKER" ? "JOKER" : `7${activator.suit}`; // Combine le 7 avec sa famille
+          const activatorDisplay = activator?.type === JOKER_CARD ? JOKER_CARD : `7${activator.suit}`; // Combine le 7 avec sa famille
 
           gameState.blockedColumns = newBlockedColumns;
           gameState.columns[suit].hasLuckyCard = true;
           gameState.columns[suit].cards = [ace];
           gameState.columns[suit].reserveSuit = activator;
-          // gameState.columns[suit].activatorType = activatorDisplay;//TBC
 
           gameState.currentPlayer.hand = newHand;
           gameState.currentPlayer.reserve = newReserve;
@@ -314,8 +346,8 @@ export class GameService {
       const card = selectedCards[0];
 
       // Vérifier si c'est un 7 ou un Joker pour la reserveSuit
-      // const isActivator = card.type === "JOKER" || card.value === "7";
-      const isActivator = card.value === "7";
+      // const isActivator = card.type === JOKER_CARD || card.value === SEVEN_CARD;
+      const isActivator = card.value === SEVEN_CARD;
 
       if (isActivator) {
         // Vérifier si la reserveSuit est déjà occupée
@@ -339,7 +371,7 @@ export class GameService {
       }
 
       // Pour les cartes numériques (As à 10)
-      if (card.type != "JOKER") {
+      if (card.type != JOKER_CARD) {
         if (card.suit !== suit || !column.hasLuckyCard) {
           return gameState;
         }
@@ -361,7 +393,7 @@ export class GameService {
 
         // Si on remplace un Joker, réactiver les attaques pour cette catégorie
         const cardToReplace = column.cards[column.cards.length];
-        if (cardToReplace && cardToReplace.type === "JOKER") {
+        if (cardToReplace && cardToReplace.type === JOKER_CARD) {
           const currentCategory = initialAttackButtons[column.cards.length].category;
           newButtonsState = gameState.columns[suit].attackStatus.attackButtons.map((button) => {
             if (button.category === currentCategory && !button.wasUsed) {
@@ -376,7 +408,10 @@ export class GameService {
         const newReserve = gameState.currentPlayer.reserve.filter((c) => c.id !== card.id);
 
         gameState.columns[suit].cards = [...gameState.columns[suit].cards, card];
-        gameState.columns[suit].attackStatus = { attackButtons: newButtonsState, lastAttackCard: {} };
+        gameState.columns[suit].attackStatus = {
+          attackButtons: newButtonsState,
+          lastAttackCard: { cardValue: "", turn: 0 },
+        };
 
         gameState.currentPlayer.hand = newHand;
         gameState.currentPlayer.reserve = newReserve;
@@ -392,7 +427,7 @@ export class GameService {
       }
 
       // si joker
-      if (card.value == "JOKER") {
+      if (card.value == JOKER_CARD) {
         //le joker ne peut remplacer A, 7 et 10
         if (position == 0 || position == 6 || position == 9) {
           gameState.selectedCards = [];
@@ -416,7 +451,10 @@ export class GameService {
       const newReserve = gameState.currentPlayer.reserve.filter((c) => c.id !== card.id);
 
       gameState.columns[suit].cards = [...gameState.columns[suit].cards, card];
-      gameState.columns[suit].attackStatus = { attackButtons: newButtonsState, lastAttackCard: {} };
+      gameState.columns[suit].attackStatus = {
+        attackButtons: newButtonsState,
+        lastAttackCard: { cardValue: "", turn: 0 },
+      };
 
       gameState.currentPlayer.hand = newHand;
       gameState.currentPlayer.reserve = newReserve;
@@ -432,12 +470,12 @@ export class GameService {
 
     // Cas d'activation avec Dame + Activateur
     if (selectedCards.length === 2) {
-      const hasQueen = selectedCards.some((card) => card.value === "Q");
-      const hasActivator = selectedCards.some((card) => card.type === "JOKER" || card.value === "7");
+      const hasQueen = selectedCards.some((card) => card.value === JOKER_CARD);
+      const hasActivator = selectedCards.some((card) => card.type === JOKER_CARD || card.value === SEVEN_CARD);
 
       if (hasQueen && hasActivator) {
-        const queen = selectedCards.find((card) => card.value === "Q");
-        const activator = selectedCards.find((card) => card.type === "JOKER" || card.value === "7");
+        const queen = selectedCards.find((card) => card.value === JOKER_CARD);
+        const activator = selectedCards.find((card) => card.type === JOKER_CARD || card.value === SEVEN_CARD);
 
         // Remove cards from hand/reserve
         const newHand = gameState.currentPlayer.hand.filter(
@@ -448,7 +486,7 @@ export class GameService {
         );
 
         // Calculate health gain
-        const healAmount = activator?.type === "JOKER" ? 4 : 2;
+        const healAmount = activator?.type === JOKER_CARD ? 4 : 2;
         const newMaxHealth = gameState.currentPlayer.maxHealth + healAmount;
 
         gameState.currentPlayer.hand = newHand;
@@ -467,8 +505,6 @@ export class GameService {
       }
     }
 
-    console.log("ret end");
-
     // Sauvegarder l'état mis à jour
     game.state = gameState;
     await this.gameRepository.save(game);
@@ -484,7 +520,7 @@ export class GameService {
 
     const gameState = game.state;
 
-    if (gameState.phase !== "PLAY" || gameState.hasPlayedAction) return null;
+    if (gameState.phase !== PLAY_PHASE || gameState.hasPlayedAction) return null;
 
     const updatedPlayer = { ...gameState.currentPlayer };
     const isInHand = updatedPlayer.hand.some((c) => c.id === selectedCard.id);
@@ -511,9 +547,7 @@ export class GameService {
     gameState.currentPlayer = updatedPlayer;
     gameState.columns = updatedColumns;
     gameState.hasPlayedAction = true;
-    // gameState.exchangeMode = false;
-    // gameState.selectedForExchange = null;
-    gameState.phase = "PLAY";
+    gameState.phase = PLAY_PHASE;
     gameState.canEndTurn = true;
 
     game.state = gameState;
@@ -529,13 +563,13 @@ export class GameService {
 
     const gameState = game.state;
 
-    if (jokerCard.type !== "JOKER" || gameState.hasPlayedAction || gameState.phase !== "PLAY") {
+    if (jokerCard.type !== JOKER_CARD || gameState.hasPlayedAction || gameState.phase !== PLAY_PHASE) {
       return null;
     }
 
     let updatedPlayer = { ...gameState.currentPlayer };
 
-    if (action === "heal") {
+    if (action === HEAL_ACTION) {
       // Augmente les PV max et actuels de 3
       const newHealth = updatedPlayer.health + 3;
       updatedPlayer.maxHealth = newHealth;
@@ -545,7 +579,7 @@ export class GameService {
       updatedPlayer.hand = updatedPlayer.hand.filter((c) => c.id !== jokerCard.id);
       updatedPlayer.reserve = updatedPlayer.reserve.filter((c) => c.id !== jokerCard.id);
       updatedPlayer.discardPile = [...updatedPlayer.discardPile, jokerCard];
-    } else if (action === "attack") {
+    } else if (action === ATTACK_ACTION) {
       // Simule une attaque en mode solo
       updatedPlayer.hand = updatedPlayer.hand.filter((c) => c.id !== jokerCard.id);
       updatedPlayer.reserve = updatedPlayer.reserve.filter((c) => c.id !== jokerCard.id);
@@ -556,7 +590,7 @@ export class GameService {
     gameState.hasPlayedAction = true;
     gameState.selectedCards = [];
     gameState.canEndTurn = true;
-    gameState.phase = "PLAY";
+    gameState.phase = PLAY_PHASE;
 
     game.state = gameState;
     await this.gameRepository.save(game);
@@ -574,8 +608,8 @@ export class GameService {
     const healAmount = isCorrect ? 5 : 1;
     const newMaxHealth = gameState.currentPlayer.maxHealth + healAmount;
 
-    const queen = selectedCards.find((card) => card.value === "Q");
-    const joker = selectedCards.find((card) => card.type === "JOKER");
+    const queen = selectedCards.find((card) => card.value === QUEEN_CARD);
+    const joker = selectedCards.find((card) => card.type === JOKER_CARD);
 
     if (!queen || !joker) return null;
 
@@ -609,9 +643,9 @@ export class GameService {
 
     const gameState = game.state;
 
-    if (gameState.phase !== "PLAY" || gameState.hasPlayedAction) return null;
+    if (gameState.phase !== PLAY_PHASE || gameState.hasPlayedAction) return null;
 
-    const isActivator = (card: Card) => card.type === "JOKER" || card.value === "7";
+    const isActivator = (card: Card) => card.type === JOKER_CARD || card.value === SEVEN_CARD;
     if (!isActivator(columnCard) || !isActivator(playerCard)) {
       return null;
     }
@@ -637,7 +671,7 @@ export class GameService {
     gameState.hasPlayedAction = true;
     gameState.message = "Échange d'activateurs effectué";
     gameState.canEndTurn = true;
-    gameState.phase = "PLAY";
+    gameState.phase = PLAY_PHASE;
 
     game.state = gameState;
     await this.gameRepository.save(game);
@@ -656,13 +690,13 @@ export class GameService {
     const valet = column?.faceCards?.J;
 
     //Le valet doit être en position d’attaque des qu’il rentre sur le terrain avec un sacrifice ou un Joker, donc possibilité d’attaquer des le tour où il est joué
-    if (attackCard.value === "J" && (valet?.activatedBy == "SACRIFICE" || valet?.activatedBy == "JOKER")) {
+    if (attackCard.value === JACK_CARD && (valet?.activatedBy == SACRIFICE || valet?.activatedBy == JOKER_CARD)) {
     } else {
-      if (gameState.phase !== "PLAY" || gameState.hasPlayedAction) return null;
+      if (gameState.phase !== PLAY_PHASE || gameState.hasPlayedAction) return null;
     }
 
     // Logique spécifique pour l'attaque du Valet
-    if (attackCard.value === "J") {
+    if (attackCard.value === JACK_CARD) {
       const column = gameState.columns[attackCard.suit];
       const valet = column.faceCards?.J;
 
@@ -775,7 +809,7 @@ export class GameService {
     const defeatingValues = ["8", "9"];
     return (
       (attackingCard.suit === defendingKing.suit && defeatingValues.includes(attackingCard.value)) ||
-      attackingCard.type === "JOKER"
+      attackingCard.type === JOKER_CARD
     );
   }
 
@@ -793,7 +827,7 @@ export class GameService {
       gameState.columns = updatedColumns;
       gameState.currentPlayer.discardPile = [...gameState.currentPlayer.discardPile, defendingKing];
       gameState.message = `Le Roi de ${defendingKing.suit} a été vaincu par ${
-        attackingCard.type === "JOKER" ? "le Joker" : attackingCard.value
+        attackingCard.type === JOKER_CARD ? "le Joker" : attackingCard.value
       } !`;
       gameState.hasPlayedAction = true;
       gameState.canEndTurn = true;
@@ -825,7 +859,7 @@ export class GameService {
     gameState.deck = remainingDeck;
     gameState.currentPlayer.hand = newHand;
     gameState.currentPlayer.discardPile = [];
-    gameState.phase = "PLAY";
+    gameState.phase = PLAY_PHASE;
     gameState.hasDiscarded = true;
     gameState.hasDrawn = true;
     gameState.hasPlayedAction = false;
@@ -884,7 +918,7 @@ export class GameService {
     if (!specialCard || selectedCards.length === 0) return null;
 
     // Vérifier le nombre de cartes requis
-    const requiredCards = specialCard.value === "K" ? 3 : specialCard.value === "Q" ? 2 : 1;
+    const requiredCards = specialCard.value === KING_CARD ? 3 : specialCard.value === QUEEN_CARD ? 2 : 1;
 
     if (selectedCards.length !== requiredCards) return null;
 
@@ -904,16 +938,16 @@ export class GameService {
     });
 
     // Pour le Roi et le Valet, ajouter la carte spéciale aux faceCards
-    if (specialCard.value === "K" || specialCard.value === "J") {
+    if (specialCard.value === KING_CARD || specialCard.value === JACK_CARD) {
       const column = updatedColumns[specialCard.suit];
       column.faceCards = {
         ...column.faceCards,
-        [specialCard.value]: { ...specialCard, activatedBy: "SACRIFICE" },
+        [specialCard.value]: { ...specialCard, activatedBy: SACRIFICE },
       };
     }
 
     // Calculer le bonus de santé
-    let healthBonus = specialCard.value === "Q" ? 2 : 0;
+    let healthBonus = specialCard.value === QUEEN_CARD ? 2 : 0;
 
     // Retirer la carte spéciale de la main ou de la réserve
     const newHand = gameState.currentPlayer.hand.filter((c) => c.id !== specialCard.id);
@@ -921,15 +955,15 @@ export class GameService {
 
     // Mettre toutes les cartes sacrifiées dans la défausse
     const cardsToDiscard = [...selectedCards];
-    if (specialCard.value === "Q") {
+    if (specialCard.value === QUEEN_CARD) {
       cardsToDiscard.push(specialCard);
     }
 
     // Construire le message final
     const actionMessage =
-      specialCard.value === "K"
+      specialCard.value === KING_CARD
         ? "Roi placé après sacrifice de 3 unités"
-        : specialCard.value === "Q"
+        : specialCard.value === QUEEN_CARD
           ? "Dame sacrifiée, +2 points de vie"
           : "Valet placé après sacrifice";
     const message = `${actionMessage}. Cliquez sur 'Fin du tour' pour continuer.`;
@@ -939,7 +973,9 @@ export class GameService {
     gameState.currentPlayer.reserve = newReserve;
     gameState.currentPlayer.health = gameState.currentPlayer.health + healthBonus;
     gameState.currentPlayer.maxHealth =
-      specialCard.value === "Q" ? gameState.currentPlayer.maxHealth + healthBonus : gameState.currentPlayer.maxHealth;
+      specialCard.value === QUEEN_CARD
+        ? gameState.currentPlayer.maxHealth + healthBonus
+        : gameState.currentPlayer.maxHealth;
     gameState.currentPlayer.discardPile = [...gameState.currentPlayer.discardPile, ...cardsToDiscard];
     gameState.selectedCards = [];
 
@@ -963,7 +999,7 @@ export class GameService {
     const { phase, hasPlayedAction, blockedColumns } = gameState;
 
     // Vérifier si l'action est valide
-    if (phase !== "PLAY" || hasPlayedAction || blockedColumns.includes(suit)) {
+    if (phase !== PLAY_PHASE || hasPlayedAction || blockedColumns.includes(suit)) {
       return null;
     }
 
@@ -984,7 +1020,7 @@ export class GameService {
     // Vérifier si la séquence est complète et dans l'ordre
     const isSequenceComplete = sequence.every((value, index) => {
       const cardValue = columnValues[index];
-      return cardValue === value || cardValue === "JOKER";
+      return cardValue === value || cardValue === JOKER_CARD;
     });
 
     if (!isSequenceComplete) {
@@ -1003,7 +1039,7 @@ export class GameService {
 
   private canUseStrategicShuffle(gameState): boolean {
     return (
-      gameState.phase === "DISCARD" && // Uniquement en phase de défausse (début du tour)
+      gameState.phase === DISCARD_PHASE && // Uniquement en phase de défausse (début du tour)
       !gameState.hasDiscarded && // Pas encore défaussé
       !gameState.hasDrawn && // Pas encore pioché
       !gameState.hasPlayedAction && // Pas encore joué d'action
@@ -1016,7 +1052,7 @@ export class GameService {
 
     const column = gameState.columns[suit];
 
-    const isJokerReplaceCard = column.cards.some((card) => card.type === "JOKER");
+    const isJokerReplaceCard = column.cards.some((card) => card.type === JOKER_CARD);
 
     // Vérifie si la colonne est complète (10 cartes)
     if (column.cards.length === 10 && !isJokerReplaceCard) {
@@ -1024,10 +1060,10 @@ export class GameService {
       const reserveSuitCard = column.reserveSuit;
 
       // Séparer les cartes face (valet et roi) des autres cartes
-      const faceCards = column.cards.filter((card) => card.value === "J" || card.value === "K");
+      const faceCards = column.cards.filter((card) => card.value === JACK_CARD || card.value === KING_CARD);
 
       // Ne défausser que les cartes qui ne sont pas des valets ou des rois
-      const cardsToDiscard = column.cards.filter((card) => card.value !== "J" && card.value !== "K");
+      const cardsToDiscard = column.cards.filter((card) => card.value !== JACK_CARD && card.value !== KING_CARD);
 
       // Ajouter l'activateur à la défausse si présent
       if (reserveSuitCard) {
@@ -1043,7 +1079,10 @@ export class GameService {
       gameState.columns[suit].reserveSuit = null;
       // gameState.columns[suit].isReserveSuitLocked = false;// S'assure que la colonne n'est pas verrouillée
       gameState.columns[suit].faceCards = column.faceCards; // Préserve les cartes face existantes
-      gameState.columns[suit].attackStatus = { attackButtons: initialAttackButtons, lastAttackCard: {} };
+      gameState.columns[suit].attackStatus = {
+        attackButtons: initialAttackButtons,
+        lastAttackCard: { cardValue: "", turn: 0 },
+      };
 
       gameState.currentPlayer.discardPile = [...gameState.currentPlayer.discardPile, ...cardsToDiscard];
 
@@ -1055,34 +1094,41 @@ export class GameService {
   }
 
   private canPlaceCard(gameState: GameState, suit: Suit, selectedCards: Card[]): boolean {
-    if (gameState.phase !== "PLAY") return false;
+    if (gameState.phase !== PLAY_PHASE) return false;
 
     // Pour l'activation avec As + JOKER/7
     if (selectedCards.length === 2) {
       const [card1, card2] = selectedCards;
 
       // Vérifier si c'est une activation de tête
-      const hasFaceCard = card1.value === "J" || card1.value === "K" || card2.value === "J" || card2.value === "K";
+      const hasFaceCard =
+        card1.value === JACK_CARD ||
+        card1.value === KING_CARD ||
+        card2.value === JACK_CARD ||
+        card2.value === KING_CARD;
       const hasActivator =
-        card1.type === "JOKER" || card1.value === "7" || card2.type === "JOKER" || card2.value === "7";
+        card1.type === JOKER_CARD ||
+        card1.value === SEVEN_CARD ||
+        card2.type === JOKER_CARD ||
+        card2.value === SEVEN_CARD;
 
       // Les têtes de jeu peuvent toujours être jouées avec un activateur, peu importe l'état de la colonne
       if (hasFaceCard && hasActivator) {
-        const faceCard = selectedCards.find((card) => card.value === "J" || card.value === "K");
+        const faceCard = selectedCards.find((card) => card.value === JACK_CARD || card.value === KING_CARD);
         // On vérifie uniquement que la tête correspond à la couleur de la colonne
         return faceCard?.suit === suit;
       }
 
       // Vérifier si c'est une Dame + activateur
-      const hasQueen = card1.value === "Q" || card2.value === "Q";
+      const hasQueen = card1.value === QUEEN_CARD || card2.value === JOKER_CARD;
       if (hasQueen && hasActivator) {
         return true;
       }
 
       // Pour l'activation avec As + Activateur (JOKER ou 7)
-      const hasAs = card1.value === "A" || card2.value === "A";
+      const hasAs = card1.value === AS_CARD || card2.value === AS_CARD;
       if (hasAs && hasActivator) {
-        const ace = selectedCards.find((card) => card.value === "A");
+        const ace = selectedCards.find((card) => card.value === AS_CARD);
         return ace?.suit === suit;
       }
     }
@@ -1091,7 +1137,7 @@ export class GameService {
     if (selectedCards.length === 1) {
       const column = gameState.columns[suit];
       if (!column.hasLuckyCard) return false;
-      return selectedCards[0].suit === suit || selectedCards[0].type === "JOKER";
+      return selectedCards[0].suit === suit || selectedCards[0].type === JOKER_CARD;
     }
 
     return false;
@@ -1105,7 +1151,7 @@ export class GameService {
 
     const gameState = game.state;
 
-    if (gameState.hasDiscarded || gameState.phase !== "DISCARD") return null;
+    if (gameState.hasDiscarded || gameState.phase !== DISCARD_PHASE) return null;
 
     const isFromHand = gameState.currentPlayer.hand.some((c) => c.id === card.id);
     const isFromReserve = gameState.currentPlayer.reserve.some((c) => c.id === card.id);
@@ -1124,7 +1170,7 @@ export class GameService {
     gameState.currentPlayer.reserve = newReserve;
     gameState.currentPlayer.discardPile = newDiscardPile;
     gameState.hasDiscarded = true;
-    gameState.phase = "DRAW";
+    gameState.phase = DRAW_PHASE;
 
     game.state = gameState;
     await this.gameRepository.save(game);
@@ -1138,7 +1184,7 @@ export class GameService {
     if (!game) return null;
 
     const gameState = game.state;
-    if (gameState.phase !== "DRAW" || gameState.hasDrawn) return null;
+    if (gameState.phase !== DRAW_PHASE || gameState.hasDrawn) return null;
 
     // Calculer combien de cartes manquent pour compléter la main et la réserve
     const currentHandCount = gameState.currentPlayer.hand.length;
@@ -1169,7 +1215,7 @@ export class GameService {
     gameState.deck = newDeck;
     gameState.currentPlayer.hand = newHand;
     gameState.currentPlayer.reserve = newReserve;
-    gameState.phase = "PLAY";
+    gameState.phase = PLAY_PHASE;
     gameState.hasDrawn = true;
 
     game.state = gameState;
@@ -1184,7 +1230,7 @@ export class GameService {
     if (!game) return null;
 
     const gameState = game.state;
-    if (gameState.phase !== "PLAY" || gameState.hasPlayedAction) return null;
+    if (gameState.phase !== PLAY_PHASE || gameState.hasPlayedAction) return null;
 
     gameState.hasPlayedAction = true;
     gameState.canEndTurn = true;
@@ -1222,20 +1268,34 @@ export class GameService {
     // });
 
     const gameState = game.state;
-    if (gameState.phase !== "PLAY") return null;
+    if (gameState.phase !== PLAY_PHASE) return null;
 
     const nextPhase =
-      gameState.currentPlayer.reserve.length + gameState.currentPlayer.hand.length !== 7 ? "DRAW" : "DISCARD";
+      gameState.currentPlayer.reserve.length + gameState.currentPlayer.hand.length !== 7 ? DRAW_PHASE : DISCARD_PHASE;
 
     gameState.currentPlayer.hasUsedStrategicShuffle = false;
     gameState.hasDrawn = false;
-    gameState.hasDiscarded = nextPhase === "DISCARD" ? false : true;
+    gameState.hasDiscarded = nextPhase === DISCARD_PHASE ? false : true;
     gameState.phase = nextPhase;
     gameState.turn += 1;
     gameState.hasPlayedAction = false;
     gameState.selectedCards = [];
     gameState.blockableColumns = [];
     gameState.blockedColumns = [];
+
+    //re-initialiser les Buttons d'attaque
+
+    const keys = Object.keys(gameState.columns);
+
+    keys.forEach((key) => {
+      const column = gameState.columns[key];
+      const jokerAttackCard = column.attackStatus.attackButtons.find((e) => e.id == JACK_CARD);
+
+      //jokerAttackCard.wasUsed &&
+      if ((gameState.turn - jokerAttackCard.insertedTurn) % 2 == 0) {
+        jokerAttackCard.active = true;
+      } else jokerAttackCard.active = false;
+    });
 
     game.state = gameState;
     await this.gameRepository.save(game);

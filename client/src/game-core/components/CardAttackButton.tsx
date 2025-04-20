@@ -13,13 +13,12 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
 
   const column = columns[attackCard.suit];
   const attackStatus = column.attackStatus;
-  let attackButtons = attackStatus.attackButtons;
+  const attackButtons = attackStatus.attackButtons;
 
   const isAttackButtonActive = attackButtons.find((button) => button.id === attackCard.value)?.active;
-  const lastAttackTurn = attackStatus.lastAttackCard?.turn;
+  const jokerInsertedTurn = attackButtons.find((button) => button.id === attackCard.value)?.insertedTurn;
 
   const [localState, setLocalState] = useState({ currentTurn: turn, canAttackNow: false });
-  const [hasDoneOnce, setHasDoneOnce] = useState(false);
 
   const valet = column?.faceCards?.J;
 
@@ -29,11 +28,7 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
         if (!localState.canAttackNow) {
           setLocalState({ ...localState, currentTurn: turn, canAttackNow: true });
           return;
-        } else setHasDoneOnce(true);
-      }
-
-      if (!isAttackButtonActive && lastAttackTurn + 2 == turn) {
-        activateCardAttackButton(attackCard);
+        }
       }
     }
 
@@ -50,10 +45,8 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
 
   var isEnabled = phase == "PLAY" && !hasPlayedAction;
 
-  if (!hasDoneOnce && attackCard.value == "J") {
-    if (valet?.activatedBy == "SACRIFICE" || valet?.activatedBy == "JOKER") {
-      isEnabled = true;
-    }
+  if (attackCard.value == "J" && jokerInsertedTurn == turn) {
+    isEnabled = true;
   }
 
   const iconClass = cn(
@@ -61,6 +54,5 @@ export function CardAttackButton({ attackCard }: CardAttackButtonProps) {
     isEnabled ? "text-red-700 animate-pulse transition-opacity duration-1000" : "text-gray-700"
   );
 
-  if (isAttackButtonActive && localState.canAttackNow)
-    return <Swords onClick={handleAttackClick} className={iconClass} />;
+  if (isAttackButtonActive) return <Swords onClick={handleAttackClick} className={iconClass} />;
 }
