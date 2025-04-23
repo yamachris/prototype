@@ -75,6 +75,7 @@ export interface GameStore extends GameState {
   setSelectedSacrificeCards: (cards: Card[]) => void;
   startGame: () => void;
   setSacrificeMode: (show: boolean) => void;
+  setShowRevolutionPopup: (showRevolutionPopup: boolean) => void;
 }
 
 // Création du store avec Zustand
@@ -283,6 +284,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
+  setShowRevolutionPopup: (showRevolutionPopup: boolean) => {
+    const state = get();
+    gameSocket.setShowRevolutionPopup(state.gameId, showRevolutionPopup);
+  },
   /*
    * FrontEnd functions
    */

@@ -5,7 +5,7 @@ import { cn } from "../utils/cn";
 import { AudioManager } from "../sound-design/audioManager";
 
 export function RevolutionPopup() {
-  const { showRevolutionPopup } = useGameStore();
+  const { showRevolutionPopup, setShowRevolutionPopup } = useGameStore();
 
   // Joue le son et ferme automatiquement la popup après 3 secondes
   useEffect(() => {
@@ -15,7 +15,8 @@ export function RevolutionPopup() {
       audioManager.playRevolutionSound();
 
       const timer = setTimeout(() => {
-        useGameStore.setState({ showRevolutionPopup: false });
+        // useGameStore.setState({ showRevolutionPopup: false });
+        setShowRevolutionPopup(false);
       }, 3000);
 
       return () => clearTimeout(timer);

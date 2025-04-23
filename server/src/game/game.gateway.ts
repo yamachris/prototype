@@ -178,4 +178,13 @@ export class GameGateway {
     const gameState = await this.gameService.handleUpdateProfile(data.gameId, data.profile);
     this.server.to(data.gameId).emit("gameState", gameState);
   }
+
+  @SubscribeMessage("showRevolutionPopup")
+  async setShowRevolutionPopup(
+    @MessageBody() data: { gameId: string; showRevolutionPopup: boolean },
+    @ConnectedSocket() client: Socket
+  ) {
+    const gameState = await this.gameService.setShowRevolutionPopup(data.gameId, data.showRevolutionPopup);
+    this.server.to(data.gameId).emit("gameState", gameState);
+  }
 }

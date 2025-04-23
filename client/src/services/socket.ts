@@ -149,6 +149,12 @@ class GameSocket {
       this.socket.emit("activatorExchange", { gameId, columnCard, playerCard });
     }
   }
+
+  setShowRevolutionPopup(gameId: string, showRevolutionPopup: boolean) {
+    if (this.socket) {
+      this.socket.emit("showRevolutionPopup", { gameId, showRevolutionPopup });
+    }
+  }
 }
 
 export const gameSocket = new GameSocket();

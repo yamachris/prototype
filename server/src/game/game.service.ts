@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Card, Player, Phase, Suit, ColumnState, GameState, attackCardButton, Profile } from "../types/game";
+import { Card, Suit, ColumnState, GameState, attackCardButton, Profile, SuitCard } from "../types/game";
 import { Game } from "../entities/game.entity";
 import { createDeck, drawCards, shuffleDeck } from "../utils/deck";
 
@@ -550,7 +550,16 @@ export class GameService {
     gameState.phase = PLAY_PHASE;
     gameState.canEndTurn = true;
 
-    game.state = gameState;
+    function isSuit(value: SuitCard): value is Suit {
+      return value !== "SPECIAL";
+    }
+
+    let _suit = isSuit(selectedCard.suit) ? selectedCard.suit : "HEARTS";
+
+    // check for revolution
+    const _gameState = this.checkRevolution(gameState, _suit);
+    game.state = _gameState;
+
     await this.gameRepository.save(game);
     return gameState;
   }
@@ -614,10 +623,10 @@ export class GameService {
     if (!queen || !joker) return null;
 
     const newHand = gameState.currentPlayer.hand.filter(
-      (card) => !gameState.selectedCards.some((selected) => selected.id === card.id)
+      (card) => !selectedCards.some((selected) => selected.id === card.id)
     );
     const newReserve = gameState.currentPlayer.reserve.filter(
-      (card) => !gameState.selectedCards.some((selected) => selected.id === card.id)
+      (card) => !selectedCards.some((selected) => selected.id === card.id)
     );
 
     gameState.currentPlayer.hand = newHand;
@@ -1031,6 +1040,21 @@ export class GameService {
     gameState.canEndTurn = true;
     gameState.blockedColumns = [...gameState.blockedColumns, suit];
     gameState.message = "game.messages.blockSuccess";
+
+    game.state = gameState;
+    await this.gameRepository.save(game);
+    return gameState;
+  }
+
+  async setShowRevolutionPopup(gameId: string, showRevolutionPopup: boolean): Promise<GameState | null> {
+    console.log("setShowRevolutionPopup ");
+
+    const game = await this.gameRepository.findOne({ where: { id: gameId } });
+    if (!game) return null;
+
+    const gameState = game.state;
+
+    gameState.showRevolutionPopup = showRevolutionPopup;
 
     game.state = gameState;
     await this.gameRepository.save(game);
