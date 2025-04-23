@@ -470,11 +470,11 @@ export class GameService {
 
     // Cas d'activation avec Dame + Activateur
     if (selectedCards.length === 2) {
-      const hasQueen = selectedCards.some((card) => card.value === JOKER_CARD);
+      const hasQueen = selectedCards.some((card) => card.value === QUEEN_CARD);
       const hasActivator = selectedCards.some((card) => card.type === JOKER_CARD || card.value === SEVEN_CARD);
 
       if (hasQueen && hasActivator) {
-        const queen = selectedCards.find((card) => card.value === JOKER_CARD);
+        const queen = selectedCards.find((card) => card.value === QUEEN_CARD);
         const activator = selectedCards.find((card) => card.type === JOKER_CARD || card.value === SEVEN_CARD);
 
         // Remove cards from hand/reserve
