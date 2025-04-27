@@ -4,6 +4,7 @@ import { UnitColumn } from "./UnitColumn";
 import { Suit } from "../types/game";
 import { canActivateColumn } from "../utils/gameLogic";
 import { RevolutionPopup } from "./RevolutionPopup";
+import { TurnTimer } from "./TurnTimer";
 
 export function GameBoard() {
   const { selectedCards, columns, handleCardPlace, phase, checkRevolution } = useGameStore();
@@ -76,6 +77,7 @@ export function GameBoard() {
         ))}
       </div>
       <RevolutionPopup />
+      <TurnTimer />
     </div>
   );
 }

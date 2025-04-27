@@ -19,6 +19,21 @@ export interface GameStore extends GameState {
   setMessage: (message: string) => void;
   canUseStrategicShuffle: () => boolean;
   confirmStrategicShuffle: () => void;
+
+  // Compte à Rebours de Tour
+  timeLeft: number;
+  turnStartTime: number;
+  isSpeedTurn: boolean;
+  consecutiveTimeouts: number;
+  showTimeoutPopup: boolean;
+  showSpeedTurnPopup: boolean;
+  startTurnTimer: () => void;
+  handleTimeOut: () => void;
+  updateConsecutiveTimeouts: () => void;
+  closeTimeoutPopup: () => void;
+  closeSpeedTurnPopup: () => void;
+  resetTimeoutCounter: () => void;
+  isEndTurnAvailable: () => boolean;
   
   // Utility Actions
   getState: () => GameStore;

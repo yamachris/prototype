@@ -1,6 +1,6 @@
 // Importation des dépendances nécessaires
 import { create } from "zustand"; // Zustand est utilisé pour la gestion d'état
-import { Card, Player, Phase, Suit, ColumnState, initialAttackButtons } from "../types/game";
+import { Card, Player, Phase, Suit, ColumnState, initialAttackButtons, SacrificeInfo } from "../types/game";
 import { Card as CardType } from "../types/game";
 import { createDeck, drawCards, shuffleDeck } from "../utils/deck";
 import { t } from "i18next";
@@ -12,6 +12,7 @@ import { createColumnActions } from "./slices/columnActions";
 import { createRevolutionActions } from "./slices/revolutionActions";
 import { createSacrificeActions } from "./slices/sacrificeActions";
 import { createKingDefenseActions } from "./slices/kingDefense"; // Importer les actions du Roi
+import { createTurnTimerActions } from "./slices/turnTimerActions"; // Importer les actions du compte à rebours
 import { handleValetAttack } from "./slices/valetActions"; // Importer handleValetAttack
 import { Columns } from "lucide-react";
 import { attackCardButton } from "../types/game";
@@ -54,8 +55,15 @@ interface GameState {
   blockedColumns: number[]; // Indices des colonnes qui ont été bloquées
   showSacrificePopup: boolean;
   showJokerExchangePopup: boolean;
-  sacrificeInfo: null;
-  availableCards: Card[];
+  sacrificeInfo: SacrificeInfo | null;
+  // Propriétés pour le compte à rebours
+  timeLeft: number; // Temps restant en secondes pour le tour actuel
+  turnStartTime: number; // Timestamp de début du tour
+  isSpeedTurn: boolean; // Indique si c'est un tour rapide (moins de 5 secondes)
+  consecutiveTimeouts: number; // Nombre de timeouts consécutifs
+  totalTimeouts: number; // Nombre total de timeouts dans la partie
+  showTimeoutPopup: boolean; // Afficher la popup de timeout
+  showSpeedTurnPopup: boolean; // Afficher la popup de tour rapide
 }
 
 // Ajout du type pour le store complet
@@ -97,6 +105,13 @@ export interface GameStore extends GameState {
   displayJokerExchangePopup: (availableCards: Card[]) => void;
   closeJokerExchangePopup: () => void;
   setSelectedJokerExchangeCards: (cards: Card[]) => void;
+  // Méthodes pour le compte à rebours
+  startTurnTimer: () => void;
+  handleTimeOutFixed: () => void;
+  updateConsecutiveTimeouts: () => void;
+  closeTimeoutPopup: () => void;
+  closeSpeedTurnPopup: () => void;
+  resetTimeoutCounter: () => void;
 }
 
 // Création du store avec Zustand
@@ -192,10 +207,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showSacrificePopup: false,
   showJokerExchangePopup: false,
   sacrificeInfo: null,
+  // Propriétés pour le compte à rebours
+  timeLeft: 30, // 30 secondes par défaut
+  turnStartTime: 0,
+  isSpeedTurn: false,
+  consecutiveTimeouts: 0,
+  totalTimeouts: 0, // Compteur total de timeouts
+  showTimeoutPopup: false,
+  showSpeedTurnPopup: false,
+  timeoutWarningThreshold: 10, // Seuil de temps pour afficher l'avertissement de timeout
   ...createColumnActions(set),
   ...createRevolutionActions(set, get),
   ...createSacrificeActions(set, get),
-  ...createKingDefenseActions(set, get), // Intégrer les actions du Roi
+  ...createKingDefenseActions(set, get),
+  ...createTurnTimerActions(set, get), // Ajouter le slice pour le compte à rebours
 
   initializeGame: () => {
     // Création et mélange du deck complet
@@ -213,7 +238,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         hand: initialHand,
         reserve: [],
         discardPile: [],
-        deck: remainingDeck,
+        deck: [],
         hasUsedStrategicShuffle: false,
         profile: {
           epithet: "Maître des Cartes",
@@ -705,7 +730,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           state.turn === 1
             ? " Pour commencer la partie, veuillez défausser votre première carte"
             : "♻️ Phase de défausse : Vous devez défausser une carte",
-        draw: "🎴 Phase de pioche : Piochez pour complter votre main",
+        draw: "🎴 Phase de pioche : Piochez pour compléter votre main",
         action: "⚔️ Phase d'action : Jouez vos cartes ou passez votre tour",
       };
 
@@ -775,7 +800,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // Fonction utilitaire pour vérifier si une carte peut être sélectionnée
   canSelectCard: (card: Card) => {
-    // Une carte peut être sélectionnée si elle est dans la main OU dans la rserve
+    // Une carte peut être sélectionnée si elle est dans la main OU dans la réserve
     const state = get();
     return (
       state.currentPlayer.hand.some((c) => c.id === card.id) ||
@@ -974,7 +999,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  canEndTurn: () => {
+  isEndTurnAvailable: () => {
     const state = get();
     return (
       state.phase === "action" && // Doit être en phase d'action
@@ -1732,6 +1757,301 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
+  handleSacrifice: (suit: Suit, specialCard: Card) => {
+    // ... existing sacrifice logic ...
+  },
+
+  setSelectedSacrificeCards: (cards: Card[]) => set({ selectedSacrificeCards: cards }),
+  setSelectedJokerExchangeCards: (cards: Card[]) => set({ selectedCards: cards }),
+  // Méthodes pour le compte à rebours
+  startTurnTimer: () => {
+    set((state) => {
+      const duration = state.isSpeedTurn ? 15 : 30; // 15 secondes si tour rapide, sinon 30
+      return {
+        timeLeft: duration,
+        turnStartTime: Date.now(),
+        isSpeedTurn: false, // Réinitialiser pour le prochain tour
+        showSpeedTurnPopup: state.isSpeedTurn, // Afficher la popup uniquement si c'est un tour rapide
+      };
+    });
+  },
+
+  handleTimeOutFixed: () => {
+    console.log("### NOUVELLE FONCTION DE TIMEOUT APPELÉE ###");
+    
+    // Marquer le timeout pour l'affichage de la popup
+    set({ showTimeoutPopup: true });
+    
+    // FONCTION COMPLÈTEMENT AUTONOME POUR SÉLECTION ALÉATOIRE
+    const selectRandomCard = (hand: Card[], maxPosition: number = 4): {card: Card, index: number} => {
+      if (hand.length === 0) return {card: null, index: -1};
+      
+      // Limiter à maxPosition ou taille de la main
+      const maxIndex = Math.min(maxPosition, hand.length - 1);
+      
+      // Générer un index vraiment aléatoire (plusieurs méthodes)
+      const timestamp = new Date().getTime();
+      const seed = timestamp % 997; // Nombre premier pour éviter les motifs
+      
+      // Méthode 1: Math.random standard
+      const rand1 = Math.floor(Math.random() * (maxIndex + 1));
+      
+      // Méthode 2: Basée sur timestamp
+      const rand2 = timestamp % (maxIndex + 1);
+      
+      // Méthode 3: Combinaison des deux avec un XOR bit à bit
+      const finalIndex = (rand1 ^ rand2) % (maxIndex + 1);
+      
+      console.log(`GÉNÉRATION ALÉATOIRE STRICTE:`);
+      console.log(`- Main: ${hand.length} cartes (considère indices 0-${maxIndex})`);
+      console.log(`- Méthode 1 (Math.random): index ${rand1}`);
+      console.log(`- Méthode 2 (timestamp): index ${rand2}`);
+      console.log(`- Index final choisi: ${finalIndex}`);
+      
+      // FORCER index à 0-4 maximum
+      const safeIndex = Math.min(finalIndex, maxIndex);
+      console.log(`- Index sécurisé utilisé: ${safeIndex}`);
+      
+      return {
+        card: hand[safeIndex],
+        index: safeIndex
+      };
+    };
+    
+    // Exécuter la logique principale de timeout immédiatement
+    set((state) => {
+      // Récupérer la main actuelle
+      const currentHand = [...state.currentPlayer.hand];
+      console.log(`Main avant timeout: ${currentHand.map((c, i) => `${i}:${c.value}${c.suit}`).join(', ')}`);
+      
+      // Si aucune carte en main, incrémenter juste les compteurs
+      if (currentHand.length === 0) {
+        console.log("Aucune carte en main, uniquement incrémentation des compteurs");
+        return {
+          totalTimeouts: state.totalTimeouts + 1,
+          consecutiveTimeouts: state.consecutiveTimeouts + 1,
+          message: "Temps écoulé! Aucune carte à défausser."
+        };
+      }
+      
+      // SÉLECTION STRICTEMENT ALÉATOIRE parmi les 5 premières cartes
+      const {card: selectedCard, index: selectedIndex} = selectRandomCard(currentHand, 4);
+      
+      if (selectedCard === null) {
+        console.error("ERREUR: Sélection de carte a échoué");
+        return state; // Ne rien changer
+      }
+      
+      console.log(`Carte sélectionnée: ${selectedCard.value}${selectedCard.suit} à l'index ${selectedIndex}`);
+      
+      // CRÉER UNE NOUVELLE MAIN SANS LA CARTE SÉLECTIONNÉE
+      const newHand = [...currentHand];
+      newHand.splice(selectedIndex, 1);
+      
+      console.log(`Main après retrait: ${newHand.map((c, i) => `${i}:${c.value}${c.suit}`).join(', ')}`);
+      
+      // Ajouter la carte à la défausse
+      const newDiscardPile = [...state.currentPlayer.discardPile, selectedCard];
+      
+      // Piocher une nouvelle carte si possible
+      let newDeck = [...state.deck];
+      let drawnCard = null;
+      
+      if (newDeck.length > 0) {
+        drawnCard = newDeck.pop();
+        console.log(`Carte piochée: ${drawnCard ? drawnCard.value + drawnCard.suit : 'aucune'}`);
+      } else if (newDiscardPile.length > 1) {
+        // Recycler la défausse si nécessaire
+        const cardsToRecycle = [...newDiscardPile.slice(0, -1)];
+        newDiscardPile.splice(0, newDiscardPile.length - 1);
+        newDeck = shuffleDeck(cardsToRecycle);
+        
+        if (newDeck.length > 0) {
+          drawnCard = newDeck.pop();
+          console.log(`Carte piochée (après recyclage): ${drawnCard ? drawnCard.value + drawnCard.suit : 'aucune'}`);
+        }
+      }
+      
+      // Main finale
+      const finalHand = drawnCard ? [...newHand, drawnCard] : newHand;
+      console.log(`Main finale: ${finalHand.map((c, i) => `${i}:${c.value}${c.suit}`).join(', ')}`);
+      
+      // Gérer les timeouts
+      const newTotalTimeouts = state.totalTimeouts + 1;
+      console.log(`Total timeouts: ${state.totalTimeouts} → ${newTotalTimeouts}`);
+      
+      // Vérifier si on atteint 3 timeouts au total (pénalité sur la réserve)
+      if (newTotalTimeouts >= 3 && state.currentPlayer.reserve.length > 0) {
+        console.log("### PÉNALITÉ DE RÉSERVE DÉCLENCHÉE ###");
+        
+        // Trouver la meilleure carte
+        const reserve = [...state.currentPlayer.reserve];
+        
+        // Évaluer les cartes
+        const getCardValue = (card: Card): number => {
+          if (card.type === 'joker') return 14;
+          switch (card.value) {
+            case 'A': return 1;
+            case 'J': return 11;
+            case 'Q': return 12;
+            case 'K': return 13;
+            default: return parseInt(card.value, 10) || 0;
+          }
+        };
+        
+        // Trier les cartes par valeur
+        reserve.sort((a, b) => getCardValue(b) - getCardValue(a));
+        console.log(`Réserve triée: ${reserve.map(c => c.value + c.suit).join(', ')}`);
+        
+        const cardToRemove = reserve[0];
+        console.log(`Carte de réserve perdue: ${cardToRemove.value}${cardToRemove.suit}`);
+        
+        const newReserve = reserve.slice(1);
+        const finalDiscardPile = [...newDiscardPile, cardToRemove];
+        
+        // Piocher une carte de remplacement
+        let replacementCard = null;
+        if (newDeck.length > 0) {
+          replacementCard = newDeck.pop();
+          if (replacementCard) {
+            newReserve.push(replacementCard);
+            console.log(`Remplacement réserve: ${replacementCard.value}${replacementCard.suit}`);
+          }
+        }
+        
+        return {
+          currentPlayer: {
+            ...state.currentPlayer,
+            hand: finalHand,
+            discardPile: finalDiscardPile,
+            reserve: newReserve,
+          },
+          deck: newDeck,
+          totalTimeouts: 0, // Réinitialiser après pénalité
+          consecutiveTimeouts: state.consecutiveTimeouts + 1,
+          message: "Trois timeouts dans la partie ! Votre meilleure carte de réserve a été défaussée."
+        };
+      } else {
+        // Pas de pénalité de réserve
+        return {
+          currentPlayer: {
+            ...state.currentPlayer,
+            hand: finalHand,
+            discardPile: newDiscardPile,
+          },
+          deck: newDeck,
+          totalTimeouts: newTotalTimeouts,
+          consecutiveTimeouts: state.consecutiveTimeouts + 1,
+          message: "Temps écoulé ! Une carte de votre main a été défaussée aléatoirement."
+        };
+      }
+    });
+    
+    // Passer au tour suivant après délai
+    setTimeout(() => {
+      console.log("Passage au tour suivant après timeout");
+      set({ showTimeoutPopup: false });
+      
+      // Récupérer l'état actuel et incrémenter
+      const latestState = get();
+      const nextTurn = latestState.turn + 1;
+      
+      console.log(`Tour: ${latestState.turn} → ${nextTurn}`);
+      
+      // Configurer le nouveau tour
+      set({
+        turn: nextTurn,
+        phase: "discard",
+        hasDiscarded: false,
+        hasDrawn: false,
+        hasPlayedAction: false,
+        selectedCards: [],
+      });
+      
+      // Démarrer le timer du nouveau tour
+      get().startTurnTimer();
+    }, 2000);
+  },
+
+  handleTimeOut: () => {
+    // REDIRECTION vers la nouvelle implémentation
+    console.log("REDIRECTION vers handleTimeOutFixed");
+    get().handleTimeOutFixed();
+  },
+
+  updateConsecutiveTimeouts: () => {
+    // Cette fonction n'est plus utilisée car la logique est intégrée à handleTimeOut
+  },
+  closeTimeoutPopup: () => {
+    set({ showTimeoutPopup: false });
+  },
+
+  closeSpeedTurnPopup: () => {
+    set({ showSpeedTurnPopup: false });
+  },
+
+  resetTimeoutCounter: () => {
+    set({ consecutiveTimeouts: 0 });
+  },
+
+  endTurn: () => {
+    set((state) => {
+      // Vérifier si le tour a été joué rapidement (moins de 5 secondes)
+      const turnDuration = (Date.now() - state.turnStartTime) / 1000;
+      const isSpeedTurn = turnDuration < 5 && state.hasPlayedAction;
+
+      const phase = state.phase;
+      // Nouvelle phase : soit on passe à la défausse, soit directement à la pioche si on a déjà joué une carte au tour précédent
+      const shouldSkipDiscard = state.playedCardsLastTurn > 0;
+      let nextPhase: Phase = "discard";
+      
+      if (shouldSkipDiscard) {
+        nextPhase = "draw";
+      }
+
+      // Vérifier si le joueur a joué une action
+      if (phase !== "action" || !state.hasPlayedAction) {
+        return state;
+      }
+
+      // Réinitialiser le compte à rebours pour le tour suivant
+      return {
+        ...state,
+        phase: nextPhase,
+        hasDiscarded: shouldSkipDiscard,
+        hasDrawn: false,
+        hasPlayedAction: false,
+        selectedCards: [],
+        turn: state.turn + 1,
+        playedCardsLastTurn: state.selectedCards.length,
+        isSpeedTurn: isSpeedTurn, // Marquer si le tour était rapide pour le prochain joueur
+        consecutiveTimeouts: 0, // Réinitialiser le compteur de timeouts car le joueur a joué son tour
+      };
+    });
+    
+    // Démarrer le timer pour le prochain tour
+    get().startTurnTimer();
+  },
+
+  // Surcharger la méthode setPhase pour démarrer le compte à rebours à chaque changement de phase
+  setPhase: (phase: Phase) => {
+    set({ phase });
+    
+    // Si c'est le début d'un nouveau tour (phase de défausse ou de pioche), démarrer le timer
+    if (phase === "discard" || phase === "draw") {
+      get().startTurnTimer();
+    }
+  },
+
+  // Remplacer canEndTurn par isEndTurnAvailable pour éviter les doublons
+  isEndTurnAvailable: () => {
+    const state = get();
+    return (
+      state.phase === "action" &&
+      (state.hasPlayedAction || state.playedCardsLastTurn === 0)
+    );
+  },
+  
   getPhaseMessage: (
     phase: Phase,
     hasDiscarded: boolean,

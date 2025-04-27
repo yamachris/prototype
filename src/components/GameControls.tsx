@@ -18,7 +18,8 @@ export function GameControls() {
     handleSkipAction,
     currentPlayer,
     handleStrategicShuffleAction,
-    language
+    language,
+    timeLeft
   } = useGameStore();
 
   const { t, i18n } = useTranslation();
@@ -84,9 +85,12 @@ export function GameControls() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg font-medium">
+            <div className="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg font-medium flex items-center">
               <span>
                 {t('game.turn', { number: turn })} - {t(`game.${phase}`)}
+              </span>
+              <span className="ml-2 text-red-600 font-bold">
+                {timeLeft}
               </span>
             </div>
           </div>
