@@ -81,6 +81,7 @@ export class GameService {
       // canBlock: false,
       blockedColumns: [],
       showRevolutionPopup: false,
+      hasUsedFirstStrategicShuffle: false,
     };
   }
 
@@ -860,19 +861,24 @@ export class GameService {
     const newDeck = shuffleDeck(allCards);
     const [remainingDeck, newHand] = drawCards(newDeck, 5);
 
-    if (gameState.currentPlayer.hasUsedStrategicShuffle) {
-      gameState.hasPlayedAction = true;
-      gameState.canEndTurn = true;
-    }
-
     gameState.deck = remainingDeck;
     gameState.currentPlayer.hand = newHand;
     gameState.currentPlayer.discardPile = [];
+    gameState.currentPlayer.hasUsedStrategicShuffle = true;
+
     gameState.phase = PLAY_PHASE;
     gameState.hasDiscarded = true;
     gameState.hasDrawn = true;
     gameState.hasPlayedAction = false;
-    gameState.currentPlayer.hasUsedStrategicShuffle = true;
+
+    if (gameState.hasUsedFirstStrategicShuffle) {
+      gameState.hasPlayedAction = true;
+      gameState.canEndTurn = true;
+      gameState.message = "game.messages.strategicShuffleNext";
+    } else {
+      gameState.hasUsedFirstStrategicShuffle = true;
+      gameState.message = "game.messages.strategicShuffleFirst";
+    }
 
     game.state = gameState;
     await this.gameRepository.save(game);

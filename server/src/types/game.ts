@@ -76,6 +76,7 @@ export interface GameState {
   // canBlock: boolean;
   blockedColumns: string[];
   showRevolutionPopup: boolean;
+  hasUsedFirstStrategicShuffle: boolean;
 }
 
 export type attackCardButton = {

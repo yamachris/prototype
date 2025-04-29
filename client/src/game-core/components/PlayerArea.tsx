@@ -6,6 +6,7 @@ import { cn } from "../utils/cn";
 import type { Card as CardType, Phase } from "../types/game";
 import { useTranslation } from "react-i18next";
 import { QueenChallenge } from "./QueenChallenge";
+import { t } from "i18next";
 
 import { JokerExchangeButton } from "./JokerExchangeButton";
 
@@ -226,7 +227,7 @@ export function PlayerArea() {
 
       {showPopup && (
         <div className="fixed bottom-4 right-4 bg-black/60 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm transition-opacity duration-300">
-          {message}
+          {t(message)}
         </div>
       )}
 

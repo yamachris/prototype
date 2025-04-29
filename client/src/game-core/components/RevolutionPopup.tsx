@@ -15,7 +15,6 @@ export function RevolutionPopup() {
       audioManager.playRevolutionSound();
 
       const timer = setTimeout(() => {
-        // useGameStore.setState({ showRevolutionPopup: false });
         setShowRevolutionPopup(false);
       }, 3000);
 
