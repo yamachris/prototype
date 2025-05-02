@@ -280,7 +280,7 @@ export class GameService {
 
             gameState.columns[suit].attackStatus.attackButtons[jackIndex] = {
               ...gameState.columns[suit].attackStatus.attackButtons[jackIndex],
-              active: true,
+              active: activator === JOKER_CARD ? true : false, //Le valet doit être en position d’attaque des qu’il rentre sur le terrain avec un  ou un Joker ou sacrifice, pas avec 7
               wasUsed: false,
               insertedTurn: gameState.turn,
             };
@@ -959,6 +959,17 @@ export class GameService {
         ...column.faceCards,
         [specialCard.value]: { ...specialCard, activatedBy: SACRIFICE },
       };
+
+      if (specialCard.value === JACK_CARD) {
+        const jackIndex = column.attackStatus.attackButtons.findIndex((e) => e.id == JACK_CARD);
+
+        column.attackStatus.attackButtons[jackIndex] = {
+          ...column.attackStatus.attackButtons[jackIndex],
+          active: true, //Le valet doit être en position d’attaque des qu’il rentre sur le terrain avec un  ou un Joker ou sacrifice, pas avec 7
+          wasUsed: false,
+          insertedTurn: gameState.turn,
+        };
+      }
     }
 
     // Calculer le bonus de santé
@@ -1276,27 +1287,6 @@ export class GameService {
     const game = await this.gameRepository.findOne({ where: { id: gameId } });
     if (!game) return null;
 
-    // Réinitialiser l'état des Valets au début du tour
-    // Object.keys(updatedColumns).forEach((suit) => {
-    //   const valet = updatedColumns[suit].faceCards?.J;
-    //   if (valet) {
-    //     if (valet.activatedBy === "seven" && !valet.hasAttacked) {
-    //       // Si le Valet a été activé avec un 7 et n'a pas encore attaqué
-    //       updatedColumns[suit].faceCards.J = {
-    //         ...valet,
-    //         canAttackNextTurn: true,
-    //         state: "active",
-    //       };
-    //     } else if (valet.hasAttacked) {
-    //       // Si le Valet a attaqué, il doit attendre un tour
-    //       updatedColumns[suit].faceCards.J = {
-    //         ...valet,
-    //         canAttackNextTurn: !valet.canAttackNextTurn, // Alterne entre true et false
-    //       };
-    //     }
-    //   }
-    // });
-
     const gameState = game.state;
     if (gameState.phase !== PLAY_PHASE) return null;
 
@@ -1314,17 +1304,13 @@ export class GameService {
     gameState.blockedColumns = [];
 
     //re-initialiser les Buttons d'attaque
-
     const keys = Object.keys(gameState.columns);
 
     keys.forEach((key) => {
       const column = gameState.columns[key];
-      const jokerAttackCard = column.attackStatus.attackButtons.find((e) => e.id == JACK_CARD);
+      const jackAttackCard = column.attackStatus.attackButtons.find((e) => e.id == JACK_CARD);
 
-      //jokerAttackCard.wasUsed &&
-      if ((gameState.turn - jokerAttackCard.insertedTurn) % 2 == 0) {
-        jokerAttackCard.active = true;
-      } else jokerAttackCard.active = false;
+      if (!jackAttackCard.active) jackAttackCard.active = true;
     });
 
     game.state = gameState;
