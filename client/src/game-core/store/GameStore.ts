@@ -44,6 +44,7 @@ export interface GameState {
   showJokerExchangePopup: boolean;
   sacrificeInfo: null;
   availableCards: Card[];
+  totalGameTime?: number; // Temps total de jeu en secondes
 }
 
 export interface GameStore extends GameState {

@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GameModule } from './game/game.module';
 import { Game } from './entities/game.entity';
 import { Player } from './entities/player.entity';
+import { GameSession } from './entities/game-session.entity';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -21,7 +22,7 @@ import databaseConfig from './config/database.config';
         username: configService.get('database.username'),
         password: configService.get('database.password'),
         database: configService.get('database.database'),
-        entities: [Game, Player],
+        entities: [Game, Player, GameSession],
         synchronize: true, // À désactiver en production
       }),
       inject: [ConfigService],

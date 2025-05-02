@@ -41,4 +41,9 @@ export class GameController {
   async endTurn(@Param("gameId") gameId: string) {
     return await this.gameService.endTurn(gameId);
   }
+
+  @Post(":gameId/update-time")
+  async updateGameTime(@Param("gameId") gameId: string, @Body() body: { totalGameTime: number }) {
+    return await this.gameService.updateGameTime(gameId, body.totalGameTime);
+  }
 }

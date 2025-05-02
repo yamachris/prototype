@@ -44,25 +44,44 @@ export class GameService {
     return game?.state || null;
   }
 
+  async updateGameTime(gameId: string, totalGameTime: number): Promise<GameState | null> {
+    const game = await this.gameRepository.findOne({ where: { id: gameId } });
+    
+    if (!game || !game.state) {
+      return null;
+    }
+
+    // Mettre à jour le temps total de jeu
+    game.state.totalGameTime = totalGameTime;
+    
+    // Sauvegarder les changements
+    await this.gameRepository.save(game);
+    
+    return game.state;
+  }
+
   private initializeGameState(): GameState {
     const deck = createDeck();
     const shuffledDeck = shuffleDeck(deck);
     const [remainingDeck, initialHand] = drawCards(shuffledDeck, 7);
 
-    return {
-      currentPlayer: {
-        id: "player-1",
-        name: "Joueur 1",
-        health: 10,
-        maxHealth: 10,
-        hand: initialHand,
-        reserve: [],
-        discardPile: [],
-        profile: {
-          epithet: "",
-        },
-        hasUsedStrategicShuffle: false,
+    const player = {
+      id: "player-1",
+      name: "Joueur 1",
+      health: 10,
+      maxHealth: 10,
+      hand: initialHand,
+      reserve: [],
+      discardPile: [],
+      profile: {
+        epithet: "",
       },
+      hasUsedStrategicShuffle: false,
+    };
+
+    return {
+      currentPlayer: player,
+      players: [player], 
       deck: remainingDeck,
       phase: SETUP_PHASE,
       turn: 1,
@@ -82,6 +101,10 @@ export class GameService {
       blockedColumns: [],
       showRevolutionPopup: false,
       hasUsedFirstStrategicShuffle: false,
+      // Initialisation des propriétés multijoueur
+      activePlayerIndex: 0,
+      waitingForReaction: false,
+      reactionTimeMs: 15000, // 15 secondes par défaut
     };
   }
 

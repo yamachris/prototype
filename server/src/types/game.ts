@@ -57,6 +57,7 @@ export interface ColumnState {
 export interface GameState {
   // gameId: string;
   currentPlayer: Player;
+  players: Player[];  // Liste de tous les joueurs
   deck: Card[];
   phase: Phase;
   turn: number;
@@ -77,6 +78,19 @@ export interface GameState {
   blockedColumns: string[];
   showRevolutionPopup: boolean;
   hasUsedFirstStrategicShuffle: boolean;
+  
+  // Propriétés pour le multijoueur
+  activePlayerIndex?: number;  // Index du joueur actif dans le tableau players
+  waitingForReaction?: boolean;  // Indique si on attend une réaction à une attaque
+  pendingAttack?: {
+    attackerId: string;  // ID du joueur qui attaque
+    targetId: string;    // ID du joueur ciblé
+    attackCard: Card;    // Carte utilisée pour l'attaque
+    attackType: string;  // Type d'attaque
+    expiresAt: number;   // Timestamp d'expiration pour la réaction
+  };
+  reactionTimeMs?: number;  // Temps accordé pour réagir (en ms)
+  totalGameTime?: number;   // Temps total de jeu en secondes
 }
 
 export type attackCardButton = {
