@@ -720,7 +720,7 @@ export class GameService {
       // Désactiver tous les boutons de la même catégorie
       const newButtonsState = buttonsState.map((button) => {
         if (button.category === clickedButtonState.category) {
-          return { ...button, active: false, wasUsed: true }; // Désactiver les boutons de la catégorie
+          return { ...button, active: false, wasUsed: true, usedTurn: gameState.turn }; // Désactiver les boutons de la catégorie
         }
         return button;
       });
@@ -1306,11 +1306,18 @@ export class GameService {
     //re-initialiser les Buttons d'attaque
     const keys = Object.keys(gameState.columns);
 
-    keys.forEach((key) => {
-      const column = gameState.columns[key];
+    keys.forEach((suit) => {
+      const column = gameState.columns[suit];
       const jackAttackCard = column.attackStatus.attackButtons.find((e) => e.id == JACK_CARD);
 
-      if (!jackAttackCard.active) jackAttackCard.active = true;
+      const jackIndex = column.attackStatus.attackButtons.findIndex((e) => e.id == JACK_CARD);
+
+      if ((gameState.turn - jackAttackCard.usedTurn) % 2 == 0 || (!jackAttackCard.usedTurn && !jackAttackCard.active)) {
+        gameState.columns[suit].attackStatus.attackButtons[jackIndex] = {
+          ...gameState.columns[suit].attackStatus.attackButtons[jackIndex],
+          active: true,
+        };
+      }
     });
 
     game.state = gameState;

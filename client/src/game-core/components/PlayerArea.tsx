@@ -236,6 +236,7 @@ export function PlayerArea() {
           queen={challengeQueen}
           onGuess={(isCorrect) => {
             handleQueenChallenge(selectedCards, isCorrect);
+            
             setShowQueenChallenge(false);
             setChallengeQueen(null);
           }}
