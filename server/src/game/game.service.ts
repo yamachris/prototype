@@ -44,44 +44,25 @@ export class GameService {
     return game?.state || null;
   }
 
-  async updateGameTime(gameId: string, totalGameTime: number): Promise<GameState | null> {
-    const game = await this.gameRepository.findOne({ where: { id: gameId } });
-    
-    if (!game || !game.state) {
-      return null;
-    }
-
-    // Mettre à jour le temps total de jeu
-    game.state.totalGameTime = totalGameTime;
-    
-    // Sauvegarder les changements
-    await this.gameRepository.save(game);
-    
-    return game.state;
-  }
-
   private initializeGameState(): GameState {
     const deck = createDeck();
     const shuffledDeck = shuffleDeck(deck);
     const [remainingDeck, initialHand] = drawCards(shuffledDeck, 7);
 
-    const player = {
-      id: "player-1",
-      name: "Joueur 1",
-      health: 10,
-      maxHealth: 10,
-      hand: initialHand,
-      reserve: [],
-      discardPile: [],
-      profile: {
-        epithet: "",
-      },
-      hasUsedStrategicShuffle: false,
-    };
-
     return {
-      currentPlayer: player,
-      players: [player], 
+      currentPlayer: {
+        id: "player-1",
+        name: "Joueur 1",
+        health: 10,
+        maxHealth: 10,
+        hand: initialHand,
+        reserve: [],
+        discardPile: [],
+        profile: {
+          epithet: "",
+        },
+        hasUsedStrategicShuffle: false,
+      },
       deck: remainingDeck,
       phase: SETUP_PHASE,
       turn: 1,
@@ -101,10 +82,7 @@ export class GameService {
       blockedColumns: [],
       showRevolutionPopup: false,
       hasUsedFirstStrategicShuffle: false,
-      // Initialisation des propriétés multijoueur
-      activePlayerIndex: 0,
-      waitingForReaction: false,
-      reactionTimeMs: 15000, // 15 secondes par défaut
+      totalGameTime: 0, // Initialiser le temps de jeu à 0
     };
   }
 
@@ -1399,6 +1377,20 @@ export class GameService {
 
     game.state = gameState;
     await this.gameRepository.save(game);
+    return gameState;
+  }
+
+  async updateGameTimer(gameId: string, time: number): Promise<GameState | null> {
+    const game = await this.gameRepository.findOne({ where: { id: gameId } });
+    if (!game) return null;
+
+    const gameState = game.state;
+
+    gameState.totalGameTime = time;
+
+    game.state = gameState;
+    await this.gameRepository.save(game);
+
     return gameState;
   }
 }

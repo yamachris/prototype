@@ -1,61 +1,62 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGameStore } from "../store/gameStore";
-import axios from "axios";
 
 export function useGameTimer() {
-  const { phase, isGameOver, gameId, totalGameTime } = useGameStore();
-
-  // Utiliser le temps sauvegardé dans le store s'il existe, sinon démarrer à 0
-  const timeRef = useRef<number>(totalGameTime || 0);
-  const timerRef = useRef<NodeJS.Timeout>();
-  const saveIntervalRef = useRef<NodeJS.Timeout>();
-
-  // Récupère le temps initial au chargement de la page si un gameId est présent
+  const { phase, isGameOver, gameId } = useGameStore();
+  const [localGameTime, setLocalGameTime] = useState<number>(0);
+  
+  // Récupérer le temps stocké dans localStorage à l'initialisation
   useEffect(() => {
-    if (gameId && phase !== "SETUP") {
-      // Initialiser le timer avec la valeur du serveur
-      timeRef.current = totalGameTime || 0;
+    if (gameId) {
+      const storedTime = localStorage.getItem(`gameTimer_${gameId}`);
+      if (storedTime) {
+        const parsedTime = parseInt(storedTime, 10);
+        if (!isNaN(parsedTime)) {
+          setLocalGameTime(parsedTime);
+          timeRef.current = parsedTime;
+        }
+      }
     }
-  }, [gameId, phase, totalGameTime]);
+  }, [gameId]);
 
-  // Gère le timer principal
+  const timeRef = useRef<number>(localGameTime);
+  const timerRef = useRef<NodeJS.Timeout>();
+
   useEffect(() => {
     if (phase === "SETUP" || isGameOver) {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      if (saveIntervalRef.current) {
-        clearInterval(saveIntervalRef.current);
-      }
       return;
     }
 
-    // Timer local qui incrémente chaque seconde
     timerRef.current = setInterval(() => {
       timeRef.current += 1;
+      setLocalGameTime(timeRef.current);
+      
+      // Sauvegarder dans localStorage
+      if (gameId) {
+        localStorage.setItem(`gameTimer_${gameId}`, timeRef.current.toString());
+      }
+      
       useGameStore.setState((state) => ({
         ...state,
         totalGameTime: timeRef.current,
       }));
+      
+      // Synchroniser avec le serveur tous les 10 secondes
+      if (timeRef.current % 10 === 0) {
+        // Envoyer le temps au serveur
+        const { sendGameTimerUpdate } = useGameStore.getState() as any;
+        if (typeof sendGameTimerUpdate === 'function') {
+          sendGameTimerUpdate(timeRef.current);
+        }
+      }
     }, 1000);
-
-    // Timer qui sauvegarde le temps sur le serveur toutes les 10 secondes
-    if (gameId) {
-      saveIntervalRef.current = setInterval(() => {
-        axios.post(`http://localhost:3007/game/${gameId}/update-time`, {
-          totalGameTime: timeRef.current,
-        }).catch(error => {
-          console.error("Erreur lors de la sauvegarde du temps de jeu:", error);
-        });
-      }, 10000); // Sauvegarde toutes les 10 secondes
-    }
 
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
-      }
-      if (saveIntervalRef.current) {
-        clearInterval(saveIntervalRef.current);
       }
     };
   }, [phase, isGameOver, gameId]);
@@ -67,7 +68,7 @@ export function useGameTimer() {
   };
 
   return {
-    totalGameTime: timeRef.current,
-    formattedTotalTime: formatTime(timeRef.current),
+    totalGameTime: localGameTime,
+    formattedTotalTime: formatTime(localGameTime),
   };
 }

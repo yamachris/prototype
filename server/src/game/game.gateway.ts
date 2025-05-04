@@ -164,6 +164,20 @@ export class GameGateway {
     this.server.to(gameId).emit("gameState", gameState);
   }
 
+  @SubscribeMessage("updateGameTimer")
+  async handleUpdateGameTimer(
+    @MessageBody() data: { gameId: string; time: number },
+    @ConnectedSocket() client: Socket
+  ) {
+    // Mettre à jour le temps de jeu dans la base de données
+    const gameState = await this.gameService.updateGameTimer(data.gameId, data.time);
+    if (gameState) {
+      // Pas besoin d'émettre l'état complet pour cette mise à jour mineure
+      // mais nous pouvons le faire pour confirmer la mise à jour
+      this.server.to(data.gameId).emit("gameTimerUpdated", data.time);
+    }
+  }
+
   @SubscribeMessage("surrender")
   async HandleSurrender(@MessageBody() gameId: string, @ConnectedSocket() client: Socket) {
     const gameState = await this.gameService.handleSurrender(gameId);

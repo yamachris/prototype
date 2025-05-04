@@ -44,7 +44,7 @@ export interface GameState {
   showJokerExchangePopup: boolean;
   sacrificeInfo: null;
   availableCards: Card[];
-  totalGameTime?: number; // Temps total de jeu en secondes
+  totalGameTime: number; // Temps total de jeu en secondes
 }
 
 export interface GameStore extends GameState {
@@ -77,12 +77,14 @@ export interface GameStore extends GameState {
   startGame: () => void;
   setSacrificeMode: (show: boolean) => void;
   setShowRevolutionPopup: (showRevolutionPopup: boolean) => void;
+  sendGameTimerUpdate: (time: number) => void; // Nouvelle fonction pour synchroniser le timer
 }
 
 // Création du store avec Zustand
 export const useGameStore = create<GameStore>((set, get) => ({
   // État initial du jeu
   language: i18n.language || "fr",
+  totalGameTime: 0, // Initialiser le temps de jeu
 
   startGame: () => {
     const state = get();
@@ -418,5 +420,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       availableCards,
       selectedSacrificeCards: [],
     });
+  },
+  sendGameTimerUpdate: (time: number) => {
+    const state = get();
+    if (state.gameId) {
+      gameSocket.updateGameTimer(state.gameId, time);
+    }
   },
 }));

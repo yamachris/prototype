@@ -155,6 +155,12 @@ class GameSocket {
       this.socket.emit("showRevolutionPopup", { gameId, showRevolutionPopup });
     }
   }
+
+  updateGameTimer(gameId: string, time: number) {
+    if (this.socket) {
+      this.socket.emit("updateGameTimer", { gameId, time });
+    }
+  }
 }
 
 export const gameSocket = new GameSocket();
