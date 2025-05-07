@@ -3,6 +3,7 @@ import { useGameStore } from "../store/gameStore";
 import { UnitColumn } from "./UnitColumn";
 import { Suit } from "../types/game";
 import { RevolutionPopup } from "./RevolutionPopup";
+import { AudioManager } from "../sound-design/audioManager";
 
 export function GameBoard() {
   const { selectedCards, columns, handleCardPlace, phase } = useGameStore();
@@ -55,6 +56,9 @@ export function GameBoard() {
   const handleColumnClick = (suit: Suit) => {
     if (!canPlaceCard(suit)) return;
 
+    // Jouer le son de carte directement au moment du clic
+    AudioManager.getInstance().playCardSound();
+    
     handleCardPlace(suit, columns[suit].cards.length);
   };
 

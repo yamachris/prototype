@@ -3,6 +3,7 @@ import { useGameStore } from "../store/gameStore";
 import { cn } from "../utils/cn";
 import { useTranslation } from "react-i18next";
 import { ArrowDown } from "lucide-react";
+import { AudioManager } from "../sound-design/audioManager";
 
 export function PlaceSevenButton() {
   const { t } = useTranslation();
@@ -54,6 +55,10 @@ export function PlaceSevenButton() {
 
     if (suitEntry) {
       const [suit, _] = suitEntry;
+      
+      // Jouer le son de pose de carte
+      AudioManager.getInstance().playCardSound();
+      
       // Place le 7 dans la colonne correspondante
       useGameStore.getState().handleCardPlace(suit as any, 6);
     }

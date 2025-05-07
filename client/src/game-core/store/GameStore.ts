@@ -199,6 +199,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   handleCardPlace: (suit: Suit, position: number) => {
     const state = get();
     gameSocket.handlePlaceCard(state.gameId, suit, state.selectedCards);
+    
+    // Jouer le son de pose de carte
+    AudioManager.getInstance().playCardSound();
   },
 
   handleQueenChallenge: (selectedCards: Card[], isCorrect: boolean) => {
@@ -214,6 +217,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   handleActivatorExchange: (columnCard: Card, playerCard: Card) => {
     const state = get();
     gameSocket.handleActivatorExchange(state.gameId, columnCard, playerCard);
+    
+    // Jouer le son de carte pour l'échange d'activateurs
+    AudioManager.getInstance().playCardSound();
   },
 
   handleJokerExchange: (selectedCard: Card) => {
@@ -222,20 +228,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   sacrificeSpecialCard: (specialCard: Card, selectedCards: Card[]) => {
-    const state = get();
     console.log("specialCard ", specialCard);
     console.log("selectedCards ", selectedCards);
+    const state = get();
+
+    // Si c'est une Dame (Q), jouer le son de soin car le joueur gagne 2 points de vie
+    if (specialCard.value === "Q") {
+      AudioManager.getInstance().playHealSound();
+    }
 
     gameSocket.handleSacrificeSpecialCard(state.gameId, specialCard, selectedCards);
-
-    //  // Jouer les sons appropriés
-    //  if (healthBonus > 0) {
-    //   // Pour la Dame, jouer le son de sacrifice suivi du son de soin
-    //   AudioManager.getInstance().playSacrificeWithHealSound();
-    // } else {
-    //   // Pour les autres cartes, jouer uniquement le son de sacrifice
-    //   AudioManager.getInstance().playSacrificeSound();
-    // }
   },
 
   handleAttack: (attackCard: Card) => {
