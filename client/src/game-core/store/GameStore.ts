@@ -232,9 +232,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
     console.log("selectedCards ", selectedCards);
     const state = get();
 
-    // Si c'est une Dame (Q), jouer le son de soin car le joueur gagne 2 points de vie
+    // Si c'est une Dame (Q), jouer le son de soin approprié
     if (specialCard.value === "Q") {
-      AudioManager.getInstance().playHealSound();
+      // Vérifier les cartes combinées avec la Dame
+      const hasJoker = selectedCards.some(card => card.type === "JOKER");
+      const hasSeven = selectedCards.some(card => card.value === "7");
+      
+      // Déterminer le type et l'intensité de la guérison
+      if (hasJoker) {
+        // Joker + Dame = +4 PV (jouer le son deux fois pour un effet plus puissant)
+        AudioManager.getInstance().playHealSound();
+        setTimeout(() => {
+          AudioManager.getInstance().playHealSound();
+        }, 200);
+      } else if (hasSeven) {
+        // 7 + Dame = +2 PV (jouer le son clairement)
+        AudioManager.getInstance().playHealSound();
+      } else {
+        // Dame standard = +2 PV
+        AudioManager.getInstance().playHealSound();
+      }
     }
 
     gameSocket.handleSacrificeSpecialCard(state.gameId, specialCard, selectedCards);
