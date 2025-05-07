@@ -38,13 +38,18 @@ export function PlayerArea() {
   const handleStrategicShuffle = () => {
     if (!canUseStrategicShuffle) return;
 
+    // Appeler d'abord la fonction du store
     storeHandleStrategicShuffle();
+    
+    // Afficher une popup locale uniquement pour confirmation visuelle de l'action
     setShowPopup(true);
-
+    
+    // Effacer les timers précédents pour éviter des conflits
     if (popupTimer.current) {
       clearTimeout(popupTimer.current);
     }
 
+    // Définir un timeout pour masquer la popup après 3 secondes
     popupTimer.current = setTimeout(() => {
       setShowPopup(false);
     }, 3000);

@@ -872,12 +872,17 @@ export class GameService {
     gameState.hasDrawn = true;
     gameState.hasPlayedAction = false;
 
+    // Vérifier si c'est la première utilisation du mélange stratégique
     if (gameState.hasUsedFirstStrategicShuffle) {
+      // Pour la deuxième utilisation et les suivantes
       gameState.hasPlayedAction = true;
       gameState.canEndTurn = true;
+      // Définir un seul message clair pour éviter le double affichage
       gameState.message = "game.messages.strategicShuffleNext";
     } else {
+      // Première utilisation - marquer comme utilisé pour la suite
       gameState.hasUsedFirstStrategicShuffle = true;
+      // Définir un message d'avertissement pour la première utilisation
       gameState.message = "game.messages.strategicShuffleFirst";
     }
 
