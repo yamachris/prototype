@@ -3,6 +3,8 @@ import { useGameStore } from "../store/gameStore";
 import { Card } from "./Card";
 import { Shield, ArrowLeftRight, RefreshCw } from "lucide-react";
 import { cn } from "../utils/cn";
+import { AudioManager } from "../sound-design/audioManager";
+import { gameSocket } from "../../services/socket";
 import type { Card as CardType, Phase } from "../types/game";
 import { useTranslation } from "react-i18next";
 import { QueenChallenge } from "./QueenChallenge";
@@ -164,7 +166,22 @@ export function PlayerArea() {
                     onQueenActivate={() => {
                       const activator = selectedCards.find((c) => c.type === "JOKER" || c.value === "7");
                       if (activator) {
-                        handleCardPlace(card.suit, 0);
+                        // Jouer UNIQUEMENT le son de guérison (pas le son de sacrifice)
+                        if (activator.type === "JOKER") {
+                          // Pour le +4 (Joker), jouer le son deux fois pour un effet plus puissant
+                          AudioManager.getInstance().playHealSound();
+                          setTimeout(() => {
+                            AudioManager.getInstance().playHealSound();
+                          }, 200);
+                        } else {
+                          // Pour le +2 (avec le 7), jouer le son de guérison une fois
+                          AudioManager.getInstance().playHealSound();
+                        }
+                        
+                        // Appeler directement la fonction du socket sans passer par handleCardPlace
+                        // pour éviter tout son de carte
+                        const state = useGameStore.getState();
+                        gameSocket.handlePlaceCard(state.gameId, card.suit, state.selectedCards);
                       }
                     }}
                     onQueenChallenge={() => {
@@ -213,7 +230,22 @@ export function PlayerArea() {
                     onQueenActivate={() => {
                       const activator = selectedCards.find((c) => c.type === "JOKER" || c.value === "7");
                       if (activator) {
-                        handleCardPlace(card.suit, 0);
+                        // Jouer UNIQUEMENT le son de guérison (pas le son de sacrifice)
+                        if (activator.type === "JOKER") {
+                          // Pour le +4 (Joker), jouer le son deux fois pour un effet plus puissant
+                          AudioManager.getInstance().playHealSound();
+                          setTimeout(() => {
+                            AudioManager.getInstance().playHealSound();
+                          }, 200);
+                        } else {
+                          // Pour le +2 (avec le 7), jouer le son de guérison une fois
+                          AudioManager.getInstance().playHealSound();
+                        }
+                        
+                        // Appeler directement la fonction du socket sans passer par handleCardPlace
+                        // pour éviter tout son de carte
+                        const state = useGameStore.getState();
+                        gameSocket.handlePlaceCard(state.gameId, card.suit, state.selectedCards);
                       }
                     }}
                     onQueenChallenge={() => {

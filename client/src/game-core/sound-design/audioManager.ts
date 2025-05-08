@@ -141,7 +141,7 @@ export class AudioManager {
       this.sacrificeSound = new Audio();
       this.sacrificeSound.src = "/assets/sound-design/sf_guillotine_04.mp3";
       if (this.sacrificeSound) {
-        this.sacrificeSound.volume = this.volume * 5;
+        this.sacrificeSound.volume = this.volume * 15; // Augmenter le volume pour que le son soit mieux entendu
         this.sacrificeSound.load();
 
         this.sacrificeSound.onloadeddata = () => {
@@ -286,11 +286,46 @@ export class AudioManager {
       if (this.sacrificeSound && !this.isMuted) {
         this.sacrificeSound.currentTime = 0;
         this.sacrificeSound.play().catch((error) => {
-          // console.error("Erreur lors de la lecture du son de sacrifice:", error);
+          console.error("Erreur lors de la lecture du son de sacrifice:", error);
         });
       }
     } catch (error) {
-      // console.error("Erreur lors de la lecture du son de sacrifice:", error);
+      console.error("Erreur lors de la lecture du son de sacrifice:", error);
+    }
+  }
+
+  // Nouvelle méthode pour jouer à la fois les sons de sacrifice et de soin
+  public playSacrificeAndHealSound(isJoker = false) {
+    try {
+      // 1. Jouer le son de guillotine
+      if (this.sacrificeSound && !this.isMuted) {
+        this.sacrificeSound.currentTime = 0;
+        this.sacrificeSound.play().catch((error) => {
+          console.error("Erreur lors de la lecture du son de sacrifice combiné:", error);
+        });
+      }
+      
+      // 2. Jouer le son de soin
+      if (this.healSound && !this.isMuted) {
+        this.healSound.currentTime = 0;
+        this.healSound.play().catch((error) => {
+          console.error("Erreur lors de la lecture du son de soin combiné:", error);
+        });
+      }
+      
+      // 3. Jouer un second son de soin pour le Joker
+      if (isJoker) {
+        setTimeout(() => {
+          if (this.healSound && !this.isMuted) {
+            this.healSound.currentTime = 0;
+            this.healSound.play().catch((error) => {
+              console.error("Erreur lors de la lecture du second son de soin:", error);
+            });
+          }
+        }, 200);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la lecture des sons combinés:", error);
     }
   }
 

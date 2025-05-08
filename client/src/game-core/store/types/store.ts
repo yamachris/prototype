@@ -9,7 +9,7 @@ export interface GameStore extends GameState {
   handleJokerAction: (joker: Card, action: "heal" | "attack") => void;
 
   // Column Actions
-  handleCardPlace: (suit: Suit, position: number) => void;
+  handleCardPlace: (suit: Suit, position: number, skipSound?: boolean) => void;
 
   // Game Flow Actions
   setPhase: (phase: Phase) => void;

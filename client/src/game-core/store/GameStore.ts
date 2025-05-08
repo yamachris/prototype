@@ -196,12 +196,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
     gameSocket.handleStrategicShuffle(state.gameId);
   },
 
-  handleCardPlace: (suit: Suit, position: number) => {
+  handleCardPlace: (suit: Suit, position: number, skipSound: boolean = false) => {
     const state = get();
+    
+    // Vérifier si une des cartes sélectionnées est un Roi (K) ET si des unités sont sacrifiées
+    const hasKing = state.selectedCards.some(card => card.value === "K");
+    const hasSacrificedUnits = state.selectedCards.length > 1; // S'il y a plus d'une carte, c'est qu'on sacrifie des unités
+    
     gameSocket.handlePlaceCard(state.gameId, suit, state.selectedCards);
     
-    // Jouer le son de pose de carte
-    AudioManager.getInstance().playCardSound();
+    // Jouer le son de sacrifice UNIQUEMENT lors du sacrifice d'unités pour le Roi
+    if (hasKing && hasSacrificedUnits) {
+      AudioManager.getInstance().playSacrificeSound();
+    }
+    // Pour tous les autres cas, jouer le son normal de carte (si skipSound est false)
+    else if (!skipSound) {
+      AudioManager.getInstance().playCardSound();
+    }
   },
 
   handleQueenChallenge: (selectedCards: Card[], isCorrect: boolean) => {
@@ -232,25 +243,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     console.log("selectedCards ", selectedCards);
     const state = get();
 
-    // Si c'est une Dame (Q), jouer le son de soin approprié
+    // Si c'est une Dame (Q)
     if (specialCard.value === "Q") {
-      // Vérifier les cartes combinées avec la Dame
-      const hasJoker = selectedCards.some(card => card.type === "JOKER");
-      const hasSeven = selectedCards.some(card => card.value === "7");
-      
-      // Déterminer le type et l'intensité de la guérison
-      if (hasJoker) {
-        // Joker + Dame = +4 PV (jouer le son deux fois pour un effet plus puissant)
+      // Sons lors du sacrifice d'unités
+      if (selectedCards.length > 0) {
+        // Jouer DEUX SONS : sacrifice + guérison (uniquement pour sacrifice d'unités)
+        AudioManager.getInstance().playSacrificeSound();
         AudioManager.getInstance().playHealSound();
+      } else {
+        // Juste le son de soin pour les autres cas
+        AudioManager.getInstance().playHealSound();
+      }
+      
+      // Bonus pour le Joker : jouer un second son de soin pour +4 PV
+      const hasJoker = selectedCards.some(card => card.type === "JOKER");
+      if (hasJoker) {
         setTimeout(() => {
           AudioManager.getInstance().playHealSound();
         }, 200);
-      } else if (hasSeven) {
-        // 7 + Dame = +2 PV (jouer le son clairement)
-        AudioManager.getInstance().playHealSound();
-      } else {
-        // Dame standard = +2 PV
-        AudioManager.getInstance().playHealSound();
       }
     }
 
