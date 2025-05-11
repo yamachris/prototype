@@ -5,6 +5,7 @@ import { getCardEffect } from '../utils/cardEffects';
 import { CardEffectDisplay } from './CardEffectDisplay';
 import { JokerActions } from './JokerActions';
 import { QueenActions } from './QueenActions';
+import { useGameStore } from '../store/gameStore';
 
 interface CardProps {
   card: CardType;
@@ -20,6 +21,8 @@ interface CardProps {
   onQueenActivate?: () => void;
   onQueenChallenge?: () => void;
   selectedCards?: CardType[];
+  // Cette prop n'est pas obligatoire car on utilisera le store directement
+  isHighlighted?: boolean;
 }
 
 export function Card({ 
@@ -34,8 +37,26 @@ export function Card({
   onJokerAction,
   onQueenActivate,
   onQueenChallenge,
-  selectedCards
+  selectedCards,
+  isHighlighted: propIsHighlighted
 }: CardProps) {
+  // Récupérer les cartes en surbrillance du store et le temps restant
+  const highlightedCards = useGameStore(state => state.highlightedCards || []);
+  const timeLeft = useGameStore(state => state.timeLeft || 0);
+  const isWarningTime = timeLeft <= 5; // Alerte quand il reste 5 secondes ou moins
+  
+  // Récupérer la main du joueur pour identifier les 5 premières cartes
+  const playerHand = useGameStore(state => state.currentPlayer.hand);
+  
+  // Vérifier si cette carte fait partie des 5 premières cartes de la main
+  const isInFirstFiveCards = playerHand.findIndex(c => c.id === card.id) < 5;
+  
+  // Déterminer si cette carte est en surbrillance (soit via prop, soit via store)
+  const isHighlighted = propIsHighlighted || highlightedCards.includes(card.id);
+  
+  // Déterminer si cette carte doit clignoter à cause du timer qui expire bientôt
+  const shouldBlink = isWarningTime && isInFirstFiveCards;
+  
   const effect = getCardEffect(card);
   const isJoker = card.type === 'joker';
   const isRed = isJoker ? card.isRedJoker : ['hearts', 'diamonds'].includes(card.suit);
@@ -82,6 +103,10 @@ export function Card({
           'transition-all duration-300',
           !isDisabled && 'hover:shadow-xl hover:-translate-y-2',
           isSelected && 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900',
+          // Ajout de l'effet de surbrillance pour les cartes permutées
+          isHighlighted && 'ring-2 ring-yellow-400 ring-opacity-80 ring-offset-2 animate-pulse shadow-yellow-200',
+          // Effet de clignotement quand le timer est presque écoulé
+          shouldBlink && 'ring-2 ring-red-500 ring-opacity-80 ring-offset-2 animate-pulse shadow-red-200',
           isDisabled && 'opacity-50 cursor-not-allowed',
           !isDisabled && 'cursor-pointer',
           isAnimating && 'animate-cardMove',

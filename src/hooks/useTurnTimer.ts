@@ -1,67 +1,96 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { AudioManager } from '../sound-design/audioManager';
 
 export function useTurnTimer() {
-  const warningThreshold = 5; // Seuil d'avertissement en secondes (constant)
+  const warningThreshold = 5; // Seuil d'avertissement en secondes
   
+  // Référence locale pour éviter les appels multiples au timeout
+  const [timeoutHandled, setTimeoutHandled] = useState(false);
+  
+  // Récupération des états du store
   const { 
     phase,
     timeLeft,
+    turn,
     consecutiveTimeouts,
-    isSpeedTurn,
+    totalTimeouts,
     showTimeoutPopup,
     showSpeedTurnPopup
   } = useGameStore();
   
+  // Récupération des actions du store
   const {
-    handleTimeOut,
+    handleTimeOutFixed,
     closeTimeoutPopup,
     closeSpeedTurnPopup,
     startTurnTimer
   } = useGameStore.getState();
 
-  // Lancer le timer au chargement du composant et à chaque changement de phase
+  // Démarrer le timer UNIQUEMENT quand le tour change, pas à chaque phase
   useEffect(() => {
     if (phase === 'setup') return;
     
-    // Démarrer le timer de tour
+    console.log(`Nouveau Tour ${turn}, démarrage du timer de 30 secondes`);
+    
+    // Reset le flag à chaque TOUR (pas à chaque phase)
+    setTimeoutHandled(false);
+    
+    // Démarrer le timer (toujours 30 secondes en mode solo)
     startTurnTimer();
-  }, [phase]);
+  }, [turn]); // Dépendance UNIQUEMENT sur turn, pas sur phase
 
-  // Gérer le décompte
+  // Gérer le décompte du timer
   useEffect(() => {
+    // Ne pas gérer le timer en phase de setup ou si pas de timer
     if (phase === 'setup' || timeLeft === undefined) return;
     
+    // Ne rien faire si on a déjà géré ce timeout
+    if (timeoutHandled) return;
+    
     const timer = setInterval(() => {
-      // Mettre à jour le timeLeft dans le store
-      useGameStore.setState(state => ({
-        timeLeft: state.timeLeft > 0 ? state.timeLeft - 1 : 0
-      }));
+      // Mettre à jour le timeLeft dans le store (sécurité pour récupérer l'état le plus récent)
+      const currentState = useGameStore.getState();
+      const currentTimeLeft = currentState.timeLeft;
       
-      // Si le temps est écoulé, déclencher les conséquences
-      if (timeLeft <= 1) {
-        clearInterval(timer);
+      if (currentTimeLeft <= 0) {
+        // Ne rien faire si on a déjà géré ce timeout
+        if (timeoutHandled) return;
         
-        // Jouer un son d'alerte - utiliser le son de sacrifice pour l'alerte
+        // Arrêter le timer et marquer comme géré
+        clearInterval(timer);
+        setTimeoutHandled(true);
+        
+        console.log("⏰ TIMER EXPIRÉ - Défausse automatique déclenchée");
+        
+        // Jouer le son d'alerte
         const audioManager = AudioManager.getInstance();
         audioManager.playSacrificeSound();
         
-        // Gérer le timeout - version simple pour éviter le double appel
-        console.log("TIMER EXPIRÉ - APPEL DE HANDLETIMEOUT");
-        handleTimeOut(); // Appel unique à handleTimeOut()
+        // Appel à la fonction de timeout (avec délai pour éviter les problèmes)
+        setTimeout(() => {
+          handleTimeOutFixed();
+        }, 100);
+        
+        return;
       }
       
-      // Si on atteint le seuil d'avertissement, jouer un son
-      if (timeLeft === warningThreshold) {
-        // Utiliser un son existant pour l'avertissement
+      // Mettre à jour le timer
+      if (currentTimeLeft > 0) {
+        useGameStore.setState({ timeLeft: currentTimeLeft - 1 });
+      }
+      
+      // Alerte sonore quand on atteint le seuil d'avertissement
+      if (currentTimeLeft === warningThreshold) {
+        console.log("⚠️ AVERTISSEMENT - 5 secondes restantes");
         const audioManager = AudioManager.getInstance();
         audioManager.playCardSound();
       }
     }, 1000);
 
+    // Nettoyer l'intervalle quand le composant est démonté
     return () => clearInterval(timer);
-  }, [timeLeft, phase]);
+  }, [timeLeft, phase, timeoutHandled]);
   
   // Calculer les classes CSS en fonction de l'état du timer
   const getTimerClasses = () => {
@@ -74,8 +103,8 @@ export function useTurnTimer() {
   return {
     timeLeft,
     isWarning: timeLeft <= warningThreshold,
-    isSpeedTurn,
     consecutiveTimeouts,
+    totalTimeouts,
     showTimeoutPopup,
     showSpeedTurnPopup,
     closeTimeoutPopup,

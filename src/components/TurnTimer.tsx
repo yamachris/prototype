@@ -113,8 +113,8 @@ export function TurnTimer() {
             />
           </svg>
           
-          {/* Affichage du temps */}
-          <span className={`${timerClasses} text-xl font-mono font-bold z-10`}>
+          {/* Affichage du temps avec clignotement intense quand < 5s */}
+          <span className={`${timerClasses} text-2xl font-mono font-extrabold z-10 ${timeLeft <= 5 ? 'animate-pulse text-red-700 scale-125 shadow-lg shadow-red-500' : ''}`}>
             {timeLeft}
           </span>
         </div>

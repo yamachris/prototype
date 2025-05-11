@@ -89,7 +89,7 @@ export function GameControls() {
               <span>
                 {t('game.turn', { number: turn })} - {t(`game.${phase}`)}
               </span>
-              <span className="ml-2 text-red-600 font-bold">
+              <span className={`ml-2 text-red-600 font-bold ${timeLeft <= 5 ? 'animate-pulse scale-110 transition-transform' : ''}`}>
                 {timeLeft}
               </span>
             </div>

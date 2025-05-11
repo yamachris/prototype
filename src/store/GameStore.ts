@@ -64,6 +64,8 @@ interface GameState {
   totalTimeouts: number; // Nombre total de timeouts dans la partie
   showTimeoutPopup: boolean; // Afficher la popup de timeout
   showSpeedTurnPopup: boolean; // Afficher la popup de tour rapide
+  highlightedCards: string[]; // Cartes à mettre en évidence
+  highlightTimeout: number | null; // Timeout pour la mise en évidence
 }
 
 // Ajout du type pour le store complet
@@ -215,6 +217,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   totalTimeouts: 0, // Compteur total de timeouts
   showTimeoutPopup: false,
   showSpeedTurnPopup: false,
+  highlightedCards: [], // Cartes à mettre en évidence
+  highlightTimeout: null, // Timeout pour la mise en évidence
   timeoutWarningThreshold: 10, // Seuil de temps pour afficher l'avertissement de timeout
   ...createColumnActions(set),
   ...createRevolutionActions(set, get),
@@ -1765,200 +1769,118 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setSelectedJokerExchangeCards: (cards: Card[]) => set({ selectedCards: cards }),
   // Méthodes pour le compte à rebours
   startTurnTimer: () => {
-    set((state) => {
-      const duration = state.isSpeedTurn ? 15 : 30; // 15 secondes si tour rapide, sinon 30
-      return {
-        timeLeft: duration,
-        turnStartTime: Date.now(),
-        isSpeedTurn: false, // Réinitialiser pour le prochain tour
-        showSpeedTurnPopup: state.isSpeedTurn, // Afficher la popup uniquement si c'est un tour rapide
-      };
+    console.log("### DÉMARRAGE DU TIMER DE TOUR ###");
+    // En mode solo, toujours 30 secondes
+    set({
+      timeLeft: 30,
+      turnStartTime: Date.now(),
+      isSpeedTurn: false, // Toujours false en mode solo
+      showSpeedTurnPopup: false // Pas besoin en mode solo
     });
+    console.log("Timer démarré: 30 secondes");
   },
 
   handleTimeOutFixed: () => {
-    console.log("### NOUVELLE FONCTION DE TIMEOUT APPELÉE ###");
-    
-    // Marquer le timeout pour l'affichage de la popup
+    console.log("### TIMEOUT DÉCLENCHÉ ###");
     set({ showTimeoutPopup: true });
-    
-    // FONCTION COMPLÈTEMENT AUTONOME POUR SÉLECTION ALÉATOIRE
-    const selectRandomCard = (hand: Card[], maxPosition: number = 4): {card: Card, index: number} => {
-      if (hand.length === 0) return {card: null, index: -1};
+
+    // Effacer tout highlight précédent
+    if (get().highlightTimeout) {
+      clearTimeout(get().highlightTimeout);
+    }
+
+    set((state) => {
+      const newTotalTimeouts = state.totalTimeouts + 1;
+      const newConsecutiveTimeouts = state.consecutiveTimeouts + 1;
+      let message = "";
+      let newDeck = [...state.deck];
       
-      // Limiter à maxPosition ou taille de la main
-      const maxIndex = Math.min(maxPosition, hand.length - 1);
+      let updatedHand = [...state.currentPlayer.hand];
+      let updatedDiscardPile = [...state.currentPlayer.discardPile];
+      let highlightedCardId = null;
+      let newCardId = null;
       
-      // Générer un index vraiment aléatoire (plusieurs méthodes)
-      const timestamp = new Date().getTime();
-      const seed = timestamp % 997; // Nombre premier pour éviter les motifs
-      
-      // Méthode 1: Math.random standard
-      const rand1 = Math.floor(Math.random() * (maxIndex + 1));
-      
-      // Méthode 2: Basée sur timestamp
-      const rand2 = timestamp % (maxIndex + 1);
-      
-      // Méthode 3: Combinaison des deux avec un XOR bit à bit
-      const finalIndex = (rand1 ^ rand2) % (maxIndex + 1);
-      
-      console.log(`GÉNÉRATION ALÉATOIRE STRICTE:`);
-      console.log(`- Main: ${hand.length} cartes (considère indices 0-${maxIndex})`);
-      console.log(`- Méthode 1 (Math.random): index ${rand1}`);
-      console.log(`- Méthode 2 (timestamp): index ${rand2}`);
-      console.log(`- Index final choisi: ${finalIndex}`);
-      
-      // FORCER index à 0-4 maximum
-      const safeIndex = Math.min(finalIndex, maxIndex);
-      console.log(`- Index sécurisé utilisé: ${safeIndex}`);
+      if (updatedHand.length > 0) {
+        // Sélectionner une carte au hasard parmi les 5 premières cartes seulement
+        const availableCardsCount = Math.min(5, updatedHand.length);
+        const randomIndex = Math.floor(Math.random() * availableCardsCount);
+        const cardToDiscard = updatedHand[randomIndex];
+        const cardPosition = randomIndex; // Position exacte dans la main
+        
+        // Enregistrer l'ID de la carte sélectionnée pour l'animation
+        highlightedCardId = cardToDiscard.id;
+        
+        // Défausser la carte sélectionnée
+        updatedHand.splice(randomIndex, 1);
+        updatedDiscardPile.push(cardToDiscard);
+        
+        // Piocher une nouvelle carte pour remplacer celle défaussée
+        let newCard = null;
+        if (newDeck.length > 0) {
+          newCard = newDeck.pop();
+        } else if (updatedDiscardPile.length > 1) {
+          // Si le deck est vide, recycler la défausse (sauf la carte qu'on vient d'y ajouter)
+          const cardsToRecycle = updatedDiscardPile.slice(0, -1);
+          updatedDiscardPile = [updatedDiscardPile[updatedDiscardPile.length - 1]];
+          newDeck = shuffleDeck(cardsToRecycle);
+          if (newDeck.length > 0) newCard = newDeck.pop();
+        }
+        
+        // Placer la nouvelle carte exactement au même endroit que celle défaussée
+        if (newCard) {
+          updatedHand.splice(cardPosition, 0, newCard);
+          newCardId = newCard.id;
+          message = "Temps écoulé ! Une carte a été défaussée et remplacée.";
+        } else {
+          message = "Temps écoulé ! Une carte a été défaussée.";
+        }
+      } else {
+        message = "Temps écoulé ! Pas de carte à défausser.";
+      }
+
+      // Pour l'animation, on met en surbrillance la nouvelle carte qui remplace celle défaussée
+      const cardsToHighlight = [];
+      if (newCardId) cardsToHighlight.push(newCardId);
       
       return {
-        card: hand[safeIndex],
-        index: safeIndex
+        currentPlayer: {
+          ...state.currentPlayer,
+          hand: updatedHand,
+          discardPile: updatedDiscardPile
+        },
+        deck: newDeck,
+        totalTimeouts: newTotalTimeouts,
+        consecutiveTimeouts: newConsecutiveTimeouts,
+        message,
+        // Mettre en surbrillance uniquement la nouvelle carte
+        highlightedCards: cardsToHighlight
       };
-    };
-    
-    // Exécuter la logique principale de timeout immédiatement
-    set((state) => {
-      // Récupérer la main actuelle
-      const currentHand = [...state.currentPlayer.hand];
-      console.log(`Main avant timeout: ${currentHand.map((c, i) => `${i}:${c.value}${c.suit}`).join(', ')}`);
-      
-      // Si aucune carte en main, incrémenter juste les compteurs
-      if (currentHand.length === 0) {
-        console.log("Aucune carte en main, uniquement incrémentation des compteurs");
-        return {
-          totalTimeouts: state.totalTimeouts + 1,
-          consecutiveTimeouts: state.consecutiveTimeouts + 1,
-          message: "Temps écoulé! Aucune carte à défausser."
-        };
-      }
-      
-      // SÉLECTION STRICTEMENT ALÉATOIRE parmi les 5 premières cartes
-      const {card: selectedCard, index: selectedIndex} = selectRandomCard(currentHand, 4);
-      
-      if (selectedCard === null) {
-        console.error("ERREUR: Sélection de carte a échoué");
-        return state; // Ne rien changer
-      }
-      
-      console.log(`Carte sélectionnée: ${selectedCard.value}${selectedCard.suit} à l'index ${selectedIndex}`);
-      
-      // CRÉER UNE NOUVELLE MAIN SANS LA CARTE SÉLECTIONNÉE
-      const newHand = [...currentHand];
-      newHand.splice(selectedIndex, 1);
-      
-      console.log(`Main après retrait: ${newHand.map((c, i) => `${i}:${c.value}${c.suit}`).join(', ')}`);
-      
-      // Ajouter la carte à la défausse
-      const newDiscardPile = [...state.currentPlayer.discardPile, selectedCard];
-      
-      // Piocher une nouvelle carte si possible
-      let newDeck = [...state.deck];
-      let drawnCard = null;
-      
-      if (newDeck.length > 0) {
-        drawnCard = newDeck.pop();
-        console.log(`Carte piochée: ${drawnCard ? drawnCard.value + drawnCard.suit : 'aucune'}`);
-      } else if (newDiscardPile.length > 1) {
-        // Recycler la défausse si nécessaire
-        const cardsToRecycle = [...newDiscardPile.slice(0, -1)];
-        newDiscardPile.splice(0, newDiscardPile.length - 1);
-        newDeck = shuffleDeck(cardsToRecycle);
-        
-        if (newDeck.length > 0) {
-          drawnCard = newDeck.pop();
-          console.log(`Carte piochée (après recyclage): ${drawnCard ? drawnCard.value + drawnCard.suit : 'aucune'}`);
-        }
-      }
-      
-      // Main finale
-      const finalHand = drawnCard ? [...newHand, drawnCard] : newHand;
-      console.log(`Main finale: ${finalHand.map((c, i) => `${i}:${c.value}${c.suit}`).join(', ')}`);
-      
-      // Gérer les timeouts
-      const newTotalTimeouts = state.totalTimeouts + 1;
-      console.log(`Total timeouts: ${state.totalTimeouts} → ${newTotalTimeouts}`);
-      
-      // Vérifier si on atteint 3 timeouts au total (pénalité sur la réserve)
-      if (newTotalTimeouts >= 3 && state.currentPlayer.reserve.length > 0) {
-        console.log("### PÉNALITÉ DE RÉSERVE DÉCLENCHÉE ###");
-        
-        // Trouver la meilleure carte
-        const reserve = [...state.currentPlayer.reserve];
-        
-        // Évaluer les cartes
-        const getCardValue = (card: Card): number => {
-          if (card.type === 'joker') return 14;
-          switch (card.value) {
-            case 'A': return 1;
-            case 'J': return 11;
-            case 'Q': return 12;
-            case 'K': return 13;
-            default: return parseInt(card.value, 10) || 0;
-          }
-        };
-        
-        // Trier les cartes par valeur
-        reserve.sort((a, b) => getCardValue(b) - getCardValue(a));
-        console.log(`Réserve triée: ${reserve.map(c => c.value + c.suit).join(', ')}`);
-        
-        const cardToRemove = reserve[0];
-        console.log(`Carte de réserve perdue: ${cardToRemove.value}${cardToRemove.suit}`);
-        
-        const newReserve = reserve.slice(1);
-        const finalDiscardPile = [...newDiscardPile, cardToRemove];
-        
-        // Piocher une carte de remplacement
-        let replacementCard = null;
-        if (newDeck.length > 0) {
-          replacementCard = newDeck.pop();
-          if (replacementCard) {
-            newReserve.push(replacementCard);
-            console.log(`Remplacement réserve: ${replacementCard.value}${replacementCard.suit}`);
-          }
-        }
-        
-        return {
-          currentPlayer: {
-            ...state.currentPlayer,
-            hand: finalHand,
-            discardPile: finalDiscardPile,
-            reserve: newReserve,
-          },
-          deck: newDeck,
-          totalTimeouts: 0, // Réinitialiser après pénalité
-          consecutiveTimeouts: state.consecutiveTimeouts + 1,
-          message: "Trois timeouts dans la partie ! Votre meilleure carte de réserve a été défaussée."
-        };
-      } else {
-        // Pas de pénalité de réserve
-        return {
-          currentPlayer: {
-            ...state.currentPlayer,
-            hand: finalHand,
-            discardPile: newDiscardPile,
-          },
-          deck: newDeck,
-          totalTimeouts: newTotalTimeouts,
-          consecutiveTimeouts: state.consecutiveTimeouts + 1,
-          message: "Temps écoulé ! Une carte de votre main a été défaussée aléatoirement."
-        };
-      }
     });
-    
-    // Passer au tour suivant après délai
+
+    // Désactiver la surbrillance après 3 secondes et passer au tour suivant
+    const highlightTimeout = setTimeout(() => {
+      set({ highlightedCards: [] });
+      
+      const currentState = get();
+      const nextTurn = currentState.turn + 1;
+      console.log(`Passage au tour suivant: ${currentState.turn} → ${nextTurn}`);
+      set({
+        turn: nextTurn,
+        phase: "discard",
+        hasDiscarded: false,
+        hasDrawn: false,
+        hasPlayedAction: false,
+      });
+      
+    }, 3000) as unknown as number;
+
+    set({ highlightTimeout });
+
     setTimeout(() => {
-      console.log("Passage au tour suivant après timeout");
       set({ showTimeoutPopup: false });
-      
-      // Récupérer l'état actuel et incrémenter
-      const latestState = get();
-      const nextTurn = latestState.turn + 1;
-      
-      console.log(`Tour: ${latestState.turn} → ${nextTurn}`);
-      
-      // Configurer le nouveau tour
+      const currentState = get();
+      const nextTurn = currentState.turn + 1;
+      console.log(`Passage au tour suivant: ${currentState.turn} → ${nextTurn}`);
       set({
         turn: nextTurn,
         phase: "discard",
@@ -1966,13 +1888,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
         hasDrawn: false,
         hasPlayedAction: false,
         selectedCards: [],
+        timeLeft: 30,
+        showTimeoutPopup: false
       });
-      
-      // Démarrer le timer du nouveau tour
-      get().startTurnTimer();
     }, 2000);
   },
-
+  // Méthodes pour le compte à rebours
   handleTimeOut: () => {
     // REDIRECTION vers la nouvelle implémentation
     console.log("REDIRECTION vers handleTimeOutFixed");
@@ -2004,7 +1925,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Nouvelle phase : soit on passe à la défausse, soit directement à la pioche si on a déjà joué une carte au tour précédent
       const shouldSkipDiscard = state.playedCardsLastTurn > 0;
       let nextPhase: Phase = "discard";
-      
       if (shouldSkipDiscard) {
         nextPhase = "draw";
       }
@@ -2028,7 +1948,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         consecutiveTimeouts: 0, // Réinitialiser le compteur de timeouts car le joueur a joué son tour
       };
     });
-    
+
     // Démarrer le timer pour le prochain tour
     get().startTurnTimer();
   },
@@ -2036,7 +1956,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Surcharger la méthode setPhase pour démarrer le compte à rebours à chaque changement de phase
   setPhase: (phase: Phase) => {
     set({ phase });
-    
+
     // Si c'est le début d'un nouveau tour (phase de défausse ou de pioche), démarrer le timer
     if (phase === "discard" || phase === "draw") {
       get().startTurnTimer();
@@ -2051,7 +1971,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       (state.hasPlayedAction || state.playedCardsLastTurn === 0)
     );
   },
-  
+
   getPhaseMessage: (
     phase: Phase,
     hasDiscarded: boolean,
