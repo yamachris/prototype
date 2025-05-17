@@ -66,23 +66,51 @@ const styles = {
 
 export default function GameLog() {
   // Intégration du mode jour/nuit
-  const { isDark } = useDarkMode();
+  const { isDark, setIsDark } = useDarkMode();
+  
+  // State local pour forcer le re-rendu quand le thème change ailleurs
+  const [localIsDark, setLocalIsDark] = useState(isDark);
+  
+  // Détecter les changements de thème en temps réel par événement
+  useEffect(() => {
+    // Synchronisation initiale avec localStorage
+    const storedTheme = localStorage.getItem("darkMode");
+    const currentDarkMode = storedTheme ? JSON.parse(storedTheme) : false;
+    if (currentDarkMode !== localIsDark) {
+      setLocalIsDark(currentDarkMode);
+    }
+    
+    // Écouter l'événement personnalisé de changement de thème
+    const handleThemeChange = (event) => {
+      setLocalIsDark(event.detail.isDark);
+    };
+    
+    // Ajouter l'écouteur d'événement
+    window.addEventListener('themeChange', handleThemeChange);
+    
+    // Nettoyage à la désinstallation
+    return () => {
+      window.removeEventListener('themeChange', handleThemeChange);
+    };
+  }, []);
+  
+  // Utiliser le thème local qui réagit aux changements
   
   // Utilisation du mode jour/nuit réel sans forçage
   
   // Ajustements de style en fonction du thème réel
-  const themeStyles = isDark ? {
-    // Mode nuit - plus sombre et neutre
+  const themeStyles = localIsDark ? {
+    // Mode nuit - inchangé comme demandé
     backgroundColor: 'rgba(17, 24, 39, 0.95)',
     color: 'white',
     border: '1px solid rgba(55, 65, 81, 0.2)',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)'
   } : {
-    // Mode jour - beaucoup plus visible sur fond vert
-    backgroundColor: 'rgba(248, 250, 252, 0.95)', // Blanc très légèrement bleuâtre avec opacité élevée
-    color: '#0f172a', // Texte bleu foncé pour contraste élevé
-    border: '1px solid rgba(37, 99, 235, 0.5)', // Bordure bleue assortie à l'en-tête
-    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)' // Ombre plus prononçée
+    // Mode jour - avec transparence pour ne pas trop cacher le plateau
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Blanc avec transparence
+    color: '#000000', // Texte noir pur pour un contraste maximal
+    border: '1px solid rgba(0, 0, 0, 0.7)', // Bordure noire semi-transparente
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)' // Ombre plus légère
   };
   
   const [isOpen, setIsOpen] = useState(true);  // true = ouvert, false = minimisé en icône
@@ -287,9 +315,9 @@ export default function GameLog() {
         className={`game-log-icon ${newMessage ? 'pulsing-icon' : ''}`}
         style={{
           ...styles.iconOnly,
-          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(37, 99, 235, 0.95)', // Bleu royal vif
-          border: isDark ? '2px solid rgba(255, 255, 255, 0.4)' : '2px solid rgba(255, 255, 255, 0.9)', // Bordure plus visible
-          boxShadow: isDark ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.25)', // Ombre plus forte
+          backgroundColor: localIsDark ? 'rgba(30, 41, 59, 0.95)' : '#1e40af', // Identique à l'en-tête, bleu foncé solide 
+          border: localIsDark ? '2px solid rgba(255, 255, 255, 0.4)' : '2px solid #ffffff', // Bordure blanche sur bleu
+          boxShadow: localIsDark ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 8px rgba(0, 0, 0, 0.5)', // Ombre forte
           left: `${position.x}px`, 
           top: `${position.y}px`,
         }}
@@ -322,9 +350,11 @@ export default function GameLog() {
         className="game-log-header"
         style={{
           ...styles.header,
-          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(37, 99, 235, 0.95)', // Même bleu royal vif que l'icône
-          color: 'white', // Texte blanc pour les deux modes
-          fontWeight: 'bold'
+          backgroundColor: localIsDark ? 'rgba(30, 41, 59, 0.95)' : '#1e40af', // Bleu foncé solide sans transparence
+          color: 'white', // Texte blanc pour les deux modes 
+          fontWeight: 'bold',
+          border: localIsDark ? 'none' : '1px solid #000000', // Bordure noire en mode jour
+          boxShadow: localIsDark ? 'none' : '0 2px 4px rgba(0, 0, 0, 0.3)' // Ombre en mode jour
         }}
         onMouseDown={handleMouseDown}
         onDoubleClick={toggleOpen}
@@ -350,54 +380,86 @@ export default function GameLog() {
             case 'opponent':
               messageTypeClass = 'game-log-opponent';
               messageIcon = '🔎 '; // Loupe (cartes adverses vues)
-              messageStyle = isDark ? {
+              messageStyle = localIsDark ? {
                 backgroundColor: 'rgba(30, 58, 138, 0.2)',
-                borderLeft: '3px solid #3b82f6'
+                borderLeft: '5px solid #3b82f6',
+                color: 'white',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                fontWeight: '500',
+                padding: '10px',
+                margin: '6px 0'
               } : {
-                backgroundColor: 'rgba(239, 246, 255, 0.9)', // Bleu très clair presque opaque
-                borderLeft: '3px solid #2563eb', // Bleu intense 
-                color: '#1e40af', // Texte bleu très foncé pour contraste maximal
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' // Légère ombre pour détacher du fond
+                backgroundColor: 'rgba(219, 234, 254, 0.9)', // Bleu clair avec légère transparence
+                borderLeft: '4px solid #1e40af', // Bordure bleue foncée 
+                color: '#000000', // Texte noir pour contraste maximal
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)', // Ombre légère
+                fontWeight: '500', // Texte légèrement plus gras 
+                padding: '8px 10px', // Espacement intérieur
+                margin: '6px 0' // Espacement entre messages
               };
               break;
             case 'action':
               messageTypeClass = 'game-log-action';
               messageIcon = '⚔️ '; // Épées (action)
-              messageStyle = isDark ? {
+              messageStyle = localIsDark ? {
                 backgroundColor: 'rgba(153, 27, 27, 0.2)',
-                borderLeft: '3px solid #ef4444'
+                borderLeft: '5px solid #ef4444',
+                color: 'white',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                fontWeight: '500',
+                padding: '10px',
+                margin: '6px 0'
               } : {
-                backgroundColor: 'rgba(254, 242, 242, 0.9)', // Rouge très clair presque opaque
-                borderLeft: '3px solid #dc2626', // Rouge vif
-                color: '#b91c1c', // Rouge foncé pour contraste maximal
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' // Légère ombre pour détacher du fond
+                backgroundColor: 'rgba(254, 226, 226, 0.9)', // Rouge clair avec légère transparence
+                borderLeft: '4px solid #b91c1c', // Rouge foncé 
+                color: '#000000', // Texte noir pour contraste maximal
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)', // Ombre légère
+                fontWeight: '500', // Texte légèrement plus gras
+                padding: '8px 10px', // Espacement intérieur
+                margin: '6px 0' // Espacement entre messages
               };
               break;
             case 'phase':
               messageTypeClass = 'game-log-phase';
               messageIcon = '🕒 '; // Horloge (phase de jeu)
-              messageStyle = isDark ? {
+              messageStyle = localIsDark ? {
                 backgroundColor: 'rgba(22, 101, 52, 0.2)',
-                borderLeft: '3px solid #10b981'
+                borderLeft: '5px solid #10b981',
+                color: 'white',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                fontWeight: '500',
+                padding: '10px',
+                margin: '6px 0'
               } : {
-                backgroundColor: 'rgba(236, 253, 245, 0.9)', // Vert très clair presque opaque
-                borderLeft: '3px solid #10b981', // Vert vif 
-                color: '#047857', // Vert foncé pour contraste maximal
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' // Légère ombre pour détacher du fond
+                backgroundColor: 'rgba(209, 250, 229, 0.9)', // Vert clair avec légère transparence
+                borderLeft: '4px solid #047857', // Vert foncé
+                color: '#000000', // Texte noir pour contraste maximal
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)', // Ombre légère
+                fontWeight: '500', // Texte légèrement plus gras
+                padding: '8px 10px', // Espacement intérieur
+                margin: '6px 0' // Espacement entre messages
               };
               break;
             case 'system':
             default:
               messageTypeClass = 'game-log-system';
               messageIcon = '📢 '; // Annonce (système)
-              messageStyle = isDark ? {
+              messageStyle = localIsDark ? {
                 backgroundColor: 'rgba(91, 33, 182, 0.2)',
-                borderLeft: '3px solid #8b5cf6'
+                borderLeft: '5px solid #8b5cf6',
+                color: 'white',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                fontWeight: '500',
+                padding: '10px',
+                margin: '6px 0'
               } : {
-                backgroundColor: 'rgba(245, 243, 255, 0.9)', // Violet très clair presque opaque
-                borderLeft: '3px solid #7c3aed', // Violet vif
-                color: '#5b21b6', // Violet foncé pour contraste maximal
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' // Légère ombre pour détacher du fond
+                backgroundColor: 'rgba(243, 232, 255, 0.9)', // Violet clair avec légère transparence
+                borderLeft: '4px solid #6d28d9', // Violet foncé
+                color: '#000000', // Texte noir pour contraste maximal
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)', // Ombre légère
+                fontWeight: '500', // Texte légèrement plus gras
+                padding: '8px 10px', // Espacement intérieur
+                margin: '6px 0' // Espacement entre messages
               };
           }
           

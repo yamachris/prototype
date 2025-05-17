@@ -12,8 +12,13 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => {
+        // Changer le thème
         localStorage.setItem("darkMode", (!isDark).toString());
         setIsDark(!isDark);
+        
+        // Diffuser un événement personnalisé pour les composants qui doivent réagir au changement de thème
+        const themeChangeEvent = new CustomEvent('themeChange', { detail: { isDark: !isDark } });
+        window.dispatchEvent(themeChangeEvent);
       }}
       className={cn(
         "fixed top-4 right-4 p-2 rounded-full transition-all duration-300",
