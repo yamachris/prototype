@@ -1,9 +1,19 @@
 import { io, Socket } from "socket.io-client";
 import { GameState, Card, Profile, Suit } from "../game-core/types/game";
 
+// Interface pour les actions adverses visuelles
+export interface OpponentAction {
+  playerId: string;
+  actionType: 'placeCard' | 'drawCard' | 'discardCard' | 'attack' | 'block';
+  targetSuit?: Suit;
+  cards?: Card[];
+  timestamp: number;
+}
+
 class GameSocket {
   private socket: Socket | null = null;
   private gameStateCallback: ((state: GameState) => void) | null = null;
+  private opponentActionCallback: ((action: OpponentAction) => void) | null = null;
 
   connect() {
     this.socket = io("http://localhost:3007", {
@@ -13,6 +23,13 @@ class GameSocket {
     this.socket.on("gameState", (state: GameState) => {
       if (this.gameStateCallback) {
         this.gameStateCallback(state);
+      }
+    });
+
+    // Écouter les notifications d'actions adverses
+    this.socket.on("opponentAction", (action: OpponentAction) => {
+      if (this.opponentActionCallback) {
+        this.opponentActionCallback(action);
       }
     });
   }
@@ -32,6 +49,10 @@ class GameSocket {
 
   onGameState(callback: (state: GameState) => void) {
     this.gameStateCallback = callback;
+  }
+
+  onOpponentAction(callback: (action: OpponentAction) => void) {
+    this.opponentActionCallback = callback;
   }
 
   moveToReserve(gameId: string, card: Card) {
@@ -73,6 +94,15 @@ class GameSocket {
   handlePlaceCard(gameId: string, suit: string, selectedCards: Card[]) {
     if (this.socket) {
       this.socket.emit("placeCard", { gameId, suit, selectedCards });
+      
+      // Émettre une notification d'action pour les autres joueurs
+      this.socket.emit("notifyOpponentAction", {
+        gameId,
+        actionType: 'placeCard',
+        targetSuit: suit,
+        cards: selectedCards,
+        timestamp: Date.now()
+      });
     }
   }
 
@@ -159,6 +189,19 @@ class GameSocket {
   updateGameTimer(gameId: string, time: number) {
     if (this.socket) {
       this.socket.emit("updateGameTimer", { gameId, time });
+    }
+  }
+
+  // Nouvelle méthode pour notifier directement une action adverse
+  notifyOpponentAction(gameId: string, actionType: string, targetSuit?: Suit, cards?: Card[]) {
+    if (this.socket) {
+      this.socket.emit("notifyOpponentAction", {
+        gameId,
+        actionType,
+        targetSuit,
+        cards,
+        timestamp: Date.now()
+      });
     }
   }
 }

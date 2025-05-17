@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useGameStore } from "./store/gameStore";
 import { Header } from "./components/Header";
 import { GameBoard } from "./components/GameBoard";
+import GameLog from "./components/GameLog";
 import { GameControls } from "./components/GameControls";
 import { SetupPhase } from "./components/SetupPhase";
 import { PlayerArea } from "./components/PlayerArea";
@@ -79,6 +80,9 @@ export default function App({ gameState }: AppProps) {
         )}
         <JokerExchangePopup />
         <SacrificePopup />
+        
+        {/* Journal de partie complet */}
+        <GameLog />
       </div>
     </I18nextProvider>
   );

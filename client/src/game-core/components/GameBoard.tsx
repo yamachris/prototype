@@ -1,12 +1,19 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useGameStore } from "../store/gameStore";
 import { UnitColumn } from "./UnitColumn";
-import { Suit } from "../types/game";
+import { Suit, Card } from "../types/game";
 import { RevolutionPopup } from "./RevolutionPopup";
 import { AudioManager } from "../sound-design/audioManager";
+import { OpponentHandVisualizer } from "./OpponentHandVisualizer";
+import { GameEventLog } from "./GameEventLog";
 
 export function GameBoard() {
-  const { selectedCards, columns, handleCardPlace, phase } = useGameStore();
+  const { selectedCards, columns, handleCardPlace, phase, currentPlayer } = useGameStore();
+  
+  // Simulation des cartes de l'adversaire - dans un vrai jeu, ces données viendraient de l'état du jeu
+  // Pour l'instant on utilise un tableau vide, mais dans un vrai jeu multijoueur,
+  // on aurait accès aux cartes via l'état global du jeu
+  const opponentCards: Card[] = [];
 
   const suits: Suit[] = ["HEARTS", "DIAMONDS", "CLUBS", "SPADES"];
 
@@ -63,21 +70,51 @@ export function GameBoard() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-green-50/95 to-green-100/95 dark:from-gray-800/95 dark:to-gray-700/95 rounded-2xl p-4 md:p-6 shadow-xl transition-colors duration-300">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {suits.map((suit) => {
-          return (
-            <UnitColumn
-              key={suit}
-              suit={suit}
-              column={columns[suit]}
-              onCardPlace={() => handleColumnClick(suit)}
-              isActive={canPlaceCard(suit)}
-            />
-          );
-        })}
+    <>
+      <div className="bg-gradient-to-br from-green-50/95 to-green-100/95 dark:from-gray-800/95 dark:to-gray-700/95 rounded-2xl p-4 md:p-6 shadow-xl transition-colors duration-300">
+        {/* Visualisation des cartes de l'adversaire (en haut) */}
+        <div className="mb-4">
+          <OpponentHandVisualizer 
+            opponentCards={opponentCards} 
+            showAll={phase === 'END'} // Afficher toutes les cartes seulement à la fin de la partie
+          />
+        </div>
+
+
+        
+        {/* Colonnes de cartes */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {suits.map((suit) => {
+            return (
+              <UnitColumn
+                key={suit}
+                suit={suit}
+                column={columns[suit]}
+                onCardPlace={() => handleColumnClick(suit)}
+                isActive={canPlaceCard(suit)}
+              />
+            );
+          })}
+        </div>
+        <RevolutionPopup />
       </div>
-      <RevolutionPopup />
+    </>
+  );
+}
+
+// Composant distinct pour le chat, résout les problèmes de rendu
+export function GameEventLogWrapper() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) return null;
+  
+  return (
+    <div className="fixed top-4 right-4 z-50">
+      <GameEventLog />
     </div>
   );
 }

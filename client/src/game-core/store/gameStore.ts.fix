@@ -1,0 +1,20 @@
+    set({
+      showSacrificePopup: mode,
+      availableCards,
+      selectedSacrificeCards: [],
+    });
+  },
+
+  sendGameTimerUpdate(time: number) {
+    const state = get();
+    gameSocket.updateGameTimer(state.gameId, time);
+  },
+
+  setLatestOpponentAction(action: OpponentAction | null) {
+    set({ latestOpponentAction: action });
+  },
+
+  resetOpponentAction() {
+    set({ latestOpponentAction: null });
+  }
+}));

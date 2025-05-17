@@ -3,6 +3,16 @@ import { Server, Socket } from "socket.io";
 import { GameService } from "./game.service";
 import { Card, Profile, Suit } from "src/types/game";
 
+// Interface pour les actions adverses
+interface OpponentAction {
+  gameId: string;
+  playerId?: string;
+  actionType: 'placeCard' | 'drawCard' | 'discardCard' | 'attack' | 'block';
+  targetSuit?: Suit;
+  cards?: Card[];
+  timestamp: number;
+}
+
 @WebSocketGateway({
   cors: {
     origin: "http://localhost:3006",
@@ -14,6 +24,19 @@ export class GameGateway {
   server: Server;
 
   constructor(private readonly gameService: GameService) {}
+  
+  // Nouveau gestionnaire pour les notifications directes d'actions adverses
+  @SubscribeMessage("notifyOpponentAction")
+  handleOpponentAction(
+    @MessageBody() action: OpponentAction,
+    @ConnectedSocket() client: Socket
+  ) {
+    // Ajouter l'id du joueur à l'action
+    action.playerId = client.id;
+    
+    // Diffuser l'action aux autres joueurs de la même partie
+    client.broadcast.to(action.gameId).emit("opponentAction", action);
+  }
 
   @SubscribeMessage("joinGame")
   async handleJoinGame(@MessageBody() gameId: string, @ConnectedSocket() client: Socket) {
@@ -44,6 +67,16 @@ export class GameGateway {
   ) {
     const gameState = await this.gameService.handleCardPlace(data.gameId, data.suit as any, data.selectedCards);
     this.server.to(data.gameId).emit("gameState", gameState);
+    
+    // Émettre une notification pour les autres joueurs dans la même partie
+    client.broadcast.to(data.gameId).emit("opponentAction", {
+      gameId: data.gameId,
+      playerId: client.id,
+      actionType: 'placeCard',
+      targetSuit: data.suit as Suit,
+      cards: data.selectedCards,
+      timestamp: Date.now()
+    });
   }
 
   @SubscribeMessage("jokerExchange")
@@ -94,6 +127,15 @@ export class GameGateway {
   ) {
     const gameState = await this.gameService.handleAttack(data.gameId, data.attackCard);
     this.server.to(data.gameId).emit("gameState", gameState);
+
+    // Notification d'attaque pour les autres joueurs
+    client.broadcast.to(data.gameId).emit("opponentAction", {
+      gameId: data.gameId,
+      playerId: client.id,
+      actionType: 'attack',
+      cards: [data.attackCard],
+      timestamp: Date.now()
+    });
   }
 
   @SubscribeMessage("strategicShuffle")
@@ -107,15 +149,36 @@ export class GameGateway {
   }
 
   @SubscribeMessage("discardCard")
-  async handleDiscard(@MessageBody() data: { gameId: string; card: Card }, @ConnectedSocket() client: Socket) {
-    const gameState = await this.gameService.handleDiscardCard(data.gameId, data.card);
+  async handleDiscard(
+    @MessageBody()
+    data: { gameId: string; card: Card },
+    @ConnectedSocket() client: Socket
+  ) {
+    const gameState = await this.gameService.handleDiscard(data.gameId, data.card);
     this.server.to(data.gameId).emit("gameState", gameState);
+
+    // Notification de défausse pour les autres joueurs
+    client.broadcast.to(data.gameId).emit("opponentAction", {
+      gameId: data.gameId,
+      playerId: client.id,
+      actionType: 'discardCard',
+      cards: [data.card],
+      timestamp: Date.now()
+    });
   }
 
   @SubscribeMessage("drawCard")
   async handleDrawCard(@MessageBody() gameId: string, @ConnectedSocket() client: Socket) {
     const gameState = await this.gameService.handleDrawCard(gameId);
     this.server.to(gameId).emit("gameState", gameState);
+    
+    // Notification de pioche pour les autres joueurs
+    client.broadcast.to(gameId).emit("opponentAction", {
+      gameId: gameId,
+      playerId: client.id,
+      actionType: 'drawCard',
+      timestamp: Date.now()
+    });
   }
 
   @SubscribeMessage("exchangeCards")
@@ -141,9 +204,22 @@ export class GameGateway {
   }
 
   @SubscribeMessage("block")
-  async handleBlock(@MessageBody() data: { gameId: string; suit: Suit }, @ConnectedSocket() client: Socket) {
+  async handleBlock(
+    @MessageBody()
+    data: { gameId: string; suit: Suit },
+    @ConnectedSocket() client: Socket
+  ) {
     const gameState = await this.gameService.handleBlock(data.gameId, data.suit);
     this.server.to(data.gameId).emit("gameState", gameState);
+
+    // Notification de blocage pour les autres joueurs
+    client.broadcast.to(data.gameId).emit("opponentAction", {
+      gameId: data.gameId,
+      playerId: client.id,
+      actionType: 'block',
+      targetSuit: data.suit,
+      timestamp: Date.now()
+    });
   }
 
   @SubscribeMessage("skipAction")
