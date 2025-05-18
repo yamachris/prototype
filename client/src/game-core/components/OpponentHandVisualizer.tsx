@@ -106,7 +106,7 @@ export const OpponentHandVisualizer: React.FC<OpponentHandVisualizerProps> = ({
                       ${hasCard ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'}
                       ${isImportant ? 'ring-1 ring-blue-700' : ''}
                     `}
-                    title={`${value} de ${suitInfo[suit].name}`}
+                    title={value === '10' ? `10 de la révolution de ${suitInfo[suit].name}` : `${displayValue} de ${suitInfo[suit].name}`}
                   >
                     <span className="text-[7px] text-black dark:text-white font-bold">{displayValue}</span>
                   </div>

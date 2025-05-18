@@ -121,7 +121,6 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
     // Adapter la valeur pour la recherche réelle dans les données
     let searchValue = value;
     if (value === "As") searchValue = "A";
-    if (value === "R") searchValue = "REVOLUTION"; // À adapter selon la logique de révolution
     let displayValue = value; // On utilise directement la valeur d'affichage
 
     var cardInSlot = column.cards.find((card) => card.value === searchValue);
@@ -238,7 +237,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
 
       {/* Zone des emplacements de cartes */}
       <div className="px-4 py-2 space-y-[6px]">
-        {["As", "2", "3", "4", "5", "6", "7", "8", "9", "10", "R"].map((value, index) => renderCardInSlot(value, index))}
+        {["10", "9", "8", "7", "6", "5", "4", "3", "2", "As"].map((value, index) => renderCardInSlot(value, index))}
       </div>
 
       {/* Zone Valet/Roi avec ligne de séparation */}
