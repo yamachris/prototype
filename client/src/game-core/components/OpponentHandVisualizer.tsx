@@ -45,6 +45,10 @@ export const OpponentHandVisualizer: React.FC<OpponentHandVisualizerProps> = ({
 
   return (
     <div className="relative p-1 bg-gray-100/70 dark:bg-gray-800/70 rounded-md shadow-sm mb-2">
+      {/* Texte ajouté entre les enseignes */}
+      <div className="absolute top-[15%] left-1/2 transform -translate-x-1/2 z-10">
+        <span className="text-gray-700 dark:text-gray-300 font-medium text-xs">Cartes de l'adversaire</span>
+      </div>
 
       <div className="grid grid-cols-4 gap-1 p-1">
         

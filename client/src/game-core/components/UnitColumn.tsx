@@ -118,20 +118,42 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
   };
 
   const renderCardInSlot = (value: string, index: number) => {
-    // Normaliser la valeur pour la recherche
-    const searchValue = value === "A" ? "As" : value;
+    // Adapter la valeur pour la recherche réelle dans les données
+    let searchValue = value;
+    if (value === "As") searchValue = "A";
+    if (value === "R") searchValue = "REVOLUTION"; // À adapter selon la logique de révolution
+    let displayValue = value; // On utilise directement la valeur d'affichage
+
     var cardInSlot = column.cards.find((card) => card.value === searchValue);
 
-    const currentIndex = 10 - index - 1;
+    const currentIndex = 10 - index;
 
     if (column.cards.length > currentIndex)
       var isJokerInSlot = column.cards[currentIndex].value === "JOKER" ? column.cards[currentIndex] : undefined;
 
     if (!cardInSlot && isJokerInSlot) cardInSlot = isJokerInSlot;
 
-    const isAs = value === "A";
+    const isAs = value === "As";
+    const isRevolution = value === "0";
 
-    const attackCard = column.cards.find((card) => card.value === value);
+    // Pour l'affichage de la révolution, on peut mettre un style spécial
+    if (isRevolution) {
+      return (
+        <div key={value}>
+          <div
+            className={cn(
+              "h-7 w-7 flex items-center justify-center rounded-full border-2 border-yellow-500 bg-yellow-100 dark:bg-yellow-900",
+              "text-yellow-700 dark:text-yellow-200 font-bold text-base"
+            )}
+            title="Révolution"
+          >
+            R
+          </div>
+        </div>
+      );
+    }
+
+    const attackCard = column.cards.find((card) => card.value === searchValue);
     const isValet = value === "J" && cardInSlot;
 
     return (
@@ -153,7 +175,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
                   "text-sm font-medium",
                   cardInSlot.color === "red" ? "text-red-500" : "text-gray-700 dark:text-gray-300"
                 )}>
-                {value}
+                {displayValue}
               </span>
             </>
           ) : (
@@ -165,7 +187,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
                     ? "text-yellow-500 dark:text-yellow-400 font-medium"
                     : "text-gray-500 dark:text-[#404859]"
                 )}>
-                {value}
+                {displayValue}
               </span>
             </>
           )}
@@ -216,7 +238,7 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
 
       {/* Zone des emplacements de cartes */}
       <div className="px-4 py-2 space-y-[6px]">
-        {["10", "9", "8", "7", "6", "5", "4", "3", "2", "A"].map((value, index) => renderCardInSlot(value, index))}
+        {["As", "2", "3", "4", "5", "6", "7", "8", "9", "10", "R"].map((value, index) => renderCardInSlot(value, index))}
       </div>
 
       {/* Zone Valet/Roi avec ligne de séparation */}
@@ -231,7 +253,6 @@ export function UnitColumn({ suit, column, onCardPlace, isActive }: UnitColumnPr
             )}>
             <div className="flex flex-col items-center space-y-1 relative w-full">
               <Sword className="w-4 h-4 text-gray-500 dark:text-[#404859]" />
-              {/* Ajouter l'épée dorée si un Valet est présent */}
               {column.faceCards?.J && (
                 <div
                   className={cn(
