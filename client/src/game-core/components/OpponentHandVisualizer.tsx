@@ -93,7 +93,10 @@ export const OpponentHandVisualizer: React.FC<OpponentHandVisualizerProps> = ({
                 const cardKey = `${suit}-${value}`;
                 const hasCard = showAll ? opponentCardMap[cardKey] : false;
                 const isImportant = importantCards.includes(value);
-                const displayValue = value === '10' ? '0' : value; // Affichage '0' pour 10 pour garder un seul caractère
+                // Utiliser As pour A et R pour 10/0 (comme dans UnitColumn)
+                let displayValue = value;
+                if (value === 'A') displayValue = 'As';
+                if (value === '10') displayValue = 'R';
                 
                 return (
                   <div 
