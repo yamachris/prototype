@@ -28,14 +28,23 @@
       "startGame": "Spiel Starten"
     },
     "cards": {
-      "deck": "Stapel",
+      "deck": "Deck",
       "discard": "Ablage",
       "hand": "Hand",
       "reserve": "Reserve",
       "total": "Gesamt",
       "slot": "Platz",
       "jack": "Bube",
-      "king": "König"
+      "king": "König",
+      "as": "Ass",
+      "revolution": "Revolution",
+      "of": "der",
+      "suits": {
+        "hearts": "Herzen",
+        "diamonds": "Karo",
+        "clubs": "Kreuz",
+        "spades": "Pik"
+      }
     },
     "actions": {
       "exchange": "Tauschen",
@@ -49,7 +58,8 @@
       "cardCount": "Karten",
       "strategicShuffle": "Strategisches Mischen",
       "cancel": "Abbrechen",
-      "confirm": "Bestätigen"
+      "confirm": "Bestätigen",
+      "opponentCards": "Karten des Gegners"
     }
   }
 }

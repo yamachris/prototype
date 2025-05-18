@@ -35,7 +35,16 @@
       "total": "Total",
       "slot": "Espacio",
       "jack": "Sota",
-      "king": "Rey"
+      "king": "Rey",
+      "as": "As",
+      "revolution": "revolución",
+      "of": "de",
+      "suits": {
+        "hearts": "Corazones",
+        "diamonds": "Diamantes",
+        "clubs": "Tréboles",
+        "spades": "Picas"
+      }
     },
     "actions": {
       "exchange": "Intercambiar",
@@ -49,7 +58,8 @@
       "cardCount": "cartas",
       "strategicShuffle": "Barajado Estratégico",
       "cancel": "Cancelar",
-      "confirm": "Confirmar"
+      "confirm": "Confirmar",
+      "opponentCards": "Cartas del Oponente"
     }
   }
 }

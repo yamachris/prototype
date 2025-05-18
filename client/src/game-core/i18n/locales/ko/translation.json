@@ -48,8 +48,9 @@
       "startMessage": "처음으로 버릴 카드를 선택하세요",
       "cardCount": "장의 카드",
       "strategicShuffle": "전략적 셔플",
-      "cancel": "취소",
-      "confirm": "확인"
+      "cancel": "초기화",
+      "confirm": "확인",
+      "opponentCards": "상대방 카드"
     }
   }
 }

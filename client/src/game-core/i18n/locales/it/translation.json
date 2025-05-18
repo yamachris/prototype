@@ -35,7 +35,16 @@
       "total": "Totale",
       "slot": "Slot",
       "jack": "Fante",
-      "king": "Re"
+      "king": "Re",
+      "as": "Asso",
+      "revolution": "rivoluzione",
+      "of": "di",
+      "suits": {
+        "hearts": "Cuori",
+        "diamonds": "Quadri",
+        "clubs": "Fiori",
+        "spades": "Picche"
+      }
     },
     "actions": {
       "exchange": "Scambia",
@@ -49,7 +58,8 @@
       "cardCount": "carte",
       "strategicShuffle": "Mischiata Strategica",
       "cancel": "Annulla",
-      "confirm": "Conferma"
+      "confirm": "Conferma",
+      "opponentCards": "Carte dell'Avversario"
     }
   }
 }

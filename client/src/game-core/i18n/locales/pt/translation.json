@@ -28,14 +28,23 @@
       "startGame": "Iniciar Jogo"
     },
     "cards": {
-      "deck": "Monte",
+      "deck": "Baralho",
       "discard": "Descarte",
       "hand": "Mão",
       "reserve": "Reserva",
       "total": "Total",
       "slot": "Espaço",
       "jack": "Valete",
-      "king": "Rei"
+      "king": "Rei",
+      "as": "Ás",
+      "revolution": "revolução",
+      "of": "de",
+      "suits": {
+        "hearts": "Copas",
+        "diamonds": "Ouros",
+        "clubs": "Paus",
+        "spades": "Espadas"
+      }
     },
     "actions": {
       "exchange": "Trocar",
@@ -49,7 +58,8 @@
       "cardCount": "cartas",
       "strategicShuffle": "Embaralhamento Estratégico",
       "cancel": "Cancelar",
-      "confirm": "Confirmar"
+      "confirm": "Confirmar",
+      "opponentCards": "Cartas do Oponente"
     }
   }
 }

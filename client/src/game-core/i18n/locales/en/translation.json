@@ -35,7 +35,16 @@
       "total": "Total",
       "slot": "Slot",
       "jack": "Jack",
-      "king": "King"
+      "king": "King",
+      "as": "Ace",
+      "revolution": "revolution",
+      "of": "of",
+      "suits": {
+        "hearts": "Hearts",
+        "diamonds": "Diamonds",
+        "clubs": "Clubs",
+        "spades": "Spades"
+      }
     },
     "actions": {
       "exchange": "Exchange",
@@ -54,7 +63,8 @@
       "cardCount": "cards",
       "strategicShuffle": "Strategic Shuffle",
       "cancel": "Cancel",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "opponentCards": "Opponent's Cards"
     }
   }
 }

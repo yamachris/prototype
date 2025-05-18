@@ -47,7 +47,16 @@
       "total": "Total",
       "slot": "Emplacement",
       "jack": "Valet",
-      "king": "Roi"
+      "king": "Roi",
+      "as": "As",
+      "revolution": "révolution",
+      "of": "de",
+      "suits": {
+        "hearts": "Cœurs",
+        "diamonds": "Carreaux",
+        "clubs": "Trèfles",
+        "spades": "Piques"
+      }
     },
     "actions": {
       "exchange": "Échanger",
@@ -77,7 +86,8 @@
       "cardCount": "cartes",
       "strategicShuffle": "Mélange Stratégique",
       "cancel": "Annuler",
-      "confirm": "Confirmer"
+      "confirm": "Confirmer",
+      "opponentCards": "Cartes de l'adversaire"
     }
   }
 }

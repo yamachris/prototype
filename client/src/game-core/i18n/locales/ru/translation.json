@@ -49,7 +49,8 @@
       "cardCount": "карты",
       "strategicShuffle": "Стратегическое перетасовывание",
       "cancel": "Отмена",
-      "confirm": "Подтвердить"
+      "confirm": "Подтвердить",
+      "opponentCards": "Карты противника"
     }
   }
 }

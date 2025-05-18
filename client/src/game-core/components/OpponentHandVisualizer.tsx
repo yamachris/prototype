@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '../types/game';
 import { useDarkMode } from '../hooks/useDarkMode';
+import { useTranslation } from 'react-i18next';
 
 interface OpponentHandVisualizerProps {
   opponentCards?: Card[];
@@ -42,12 +43,15 @@ export const OpponentHandVisualizer: React.FC<OpponentHandVisualizerProps> = ({
 
   // Les cartes importantes à afficher
   const importantCards = ['J', 'K', 'A', '10'];
+  
+  // Hook de traduction
+  const { t } = useTranslation();
 
   return (
     <div className="relative p-1 bg-gray-100/70 dark:bg-gray-800/70 rounded-md shadow-sm mb-2">
       {/* Texte ajouté entre les enseignes */}
       <div className="absolute top-[15%] left-1/2 transform -translate-x-1/2 z-10">
-        <span className="text-gray-700 dark:text-gray-300 font-medium text-xs">Cartes de l'adversaire</span>
+        <span className="text-gray-700 dark:text-gray-300 font-medium text-xs">{t('game.ui.opponentCards')}</span>
       </div>
 
       <div className="grid grid-cols-4 gap-1 p-1">
@@ -106,7 +110,10 @@ export const OpponentHandVisualizer: React.FC<OpponentHandVisualizerProps> = ({
                       ${hasCard ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'}
                       ${isImportant ? 'ring-1 ring-blue-700' : ''}
                     `}
-                    title={value === '10' ? `10 de la révolution de ${suitInfo[suit].name}` : `${displayValue} de ${suitInfo[suit].name}`}
+                    title={value === '10' 
+                      ? `10 ${t('game.cards.of')} ${t('game.cards.revolution')} ${t(`game.cards.suits.${suit.toLowerCase()}`)}`
+                      : `${value === 'A' ? t('game.cards.as') : displayValue} ${t('game.cards.of')} ${t(`game.cards.suits.${suit.toLowerCase()}`)}`
+                    }
                   >
                     <span className="text-[7px] text-black dark:text-white font-bold">{displayValue}</span>
                   </div>

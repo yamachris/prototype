@@ -49,7 +49,8 @@
       "cardCount": "कार्ड",
       "strategicShuffle": "रणनीतिक शफल",
       "cancel": "रद्द करें",
-      "confirm": "पुष्टि करें"
+      "confirm": "पुष्टि करें",
+      "opponentCards": "प्रतिद्वंद्वी के ताश"
     }
   }
 }
